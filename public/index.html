@@ -1,657 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Casino Hub - Aviator & Color</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    body {
-      background-color: #0d1015;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 15px 0;
-      box-sizing: border-box;
-    }
-    .top-nav {
-      width: 660px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .tabs { display: flex; gap: 8px; }
-    .tab-btn {
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: bold;
-      border: 1px solid #2a313d;
-      background: #161a22;
-      color: #8b949e;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .tab-btn.active {
-      background: #e61e38;
-      color: #fff;
-      border-color: #e61e38;
-    }
-    .wallet-section {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .wallet-card {
-      background: #1a1e26;
-      border: 1px solid #2a313d;
-      padding: 7px 14px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-    .wallet-card span { color: #28a745; }
-    .btn-action {
-      color: white;
-      border: none;
-      padding: 7px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .btn-deposit { background: #28a745; }
-    .btn-withdraw { background: #3b82f6; }
-
-    .game-section { display: none; width: 660px; flex-direction: column; align-items: center; }
-    .game-section.active { display: flex; }
-
-    .history-container { width: 100%; display: flex; align-items: center; gap: 6px; overflow-x: hidden; margin-bottom: 10px; }
-    .history-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; white-space: nowrap; }
-    .badge-low { background: #1f2735; color: #3f95ff; border: 1px solid #2a3d5e; }
-    .badge-mid { background: #2b1f3b; color: #a855f7; border: 1px solid #4a286b; }
-    .badge-high { background: #3b3218; color: #eab308; border: 1px solid #6b561c; }
-
-    .aviator-canvas-box {
-      position: relative;
-      width: 100%;
-      height: 300px;
-      background: radial-gradient(circle at center, #1b2028 0%, #0d1015 100%);
-      border: 2px solid #282f3c;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-    .overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
-    .multiplier { font-size: 54px; font-weight: 900; color: #ffffff; }
-    .status { font-size: 14px; color: #9aa2af; margin-top: 4px; }
-
-    .dual-panels { width: 100%; display: flex; gap: 14px; margin-top: 12px; }
-    .bet-box {
-      flex: 1;
-      background: #161a22;
-      border: 1px solid #242b35;
-      border-radius: 10px;
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .panel-header { display: flex; justify-content: space-between; font-size: 12px; color: #8b949e; font-weight: bold; }
-    .panel-body { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .amount-stepper { display: flex; align-items: center; gap: 4px; }
-    .adjust-btn {
-      width: 32px; height: 34px; background: #252c38; color: #fff;
-      border: 1px solid #363f4f; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;
-    }
-    .bet-input {
-      width: 60px; height: 34px; background: #0d1015; border: 1px solid #2c3442;
-      border-radius: 6px; color: #fff; font-size: 15px; font-weight: bold; text-align: center; outline: none;
-    }
-    .action-btn {
-      flex: 1; height: 36px; font-size: 14px; font-weight: bold;
-      border: none; border-radius: 8px; cursor: pointer;
-    }
-    .btn-green { background: #28a745; color: white; }
-    .btn-orange { background: #ff9800; color: white; }
-    .action-btn:disabled { background: #2e3440; color: #6b7280; cursor: not-allowed; }
-
-    .color-card {
-      width: 100%; background: #161a22; border: 1px solid #242b35;
-      border-radius: 12px; padding: 18px; box-sizing: border-box;
-    }
-    .period-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      background: #0d1015; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
-    }
-    .timer-badge { font-size: 24px; font-weight: 900; color: #ffb703; font-family: monospace; }
-    .colors-group { display: flex; gap: 12px; margin-bottom: 16px; }
-    .color-btn {
-      flex: 1; height: 46px; border: none; border-radius: 8px;
-      font-size: 16px; font-weight: bold; color: white; cursor: pointer;
-    }
-    .bg-green { background: #28a745; }
-    .bg-violet { background: #9333ea; }
-    .bg-red { background: #dc3545; }
-    .numbers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 16px; }
-    .num-btn {
-      height: 42px; border: 1px solid #2f3846; background: #1c222c;
-      color: white; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
-    }
-    .history-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
-    .history-table th, .history-table td { padding: 8px; text-align: center; border-bottom: 1px solid #222a35; }
-    .history-table th { color: #8b949e; }
-    .pill { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin: 0 2px; }
-
-    /* Modals */
-    .modal-backdrop {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-box {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      width: 350px;
-      padding: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.9);
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .modal-title { font-size: 17px; font-weight: bold; }
-    .close-btn { background: none; border: none; font-size: 22px; color: #8b949e; cursor: pointer; }
-    .modal-input {
-      width: 100%;
-      padding: 10px;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 14px;
-      margin-bottom: 10px;
-      box-sizing: border-box;
-      outline: none;
-    }
-    .submit-btn {
-      width: 100%;
-      padding: 11px;
-      font-size: 14px;
-      font-weight: bold;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .qr-card {
-      background: #fff;
-      padding: 10px;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 10px 0;
-    }
-    .qr-card img { width: 160px; height: 160px; object-fit: contain; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Big Daddy Game - Official Lobby</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { background: #1a1a24; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 450px; background: #12121a; min-height: 100vh; padding-bottom: 75px; position: relative; }
+        .top-header { background: #222232; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2d42; position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 20px; font-weight: 900; background: linear-gradient(135deg, #f5d061, #e6a119); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; letter-spacing: 1px; }
+        .header-actions { display: flex; gap: 8px; align-items: center; }
+        .btn-deposit { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #000; font-weight: 700; padding: 6px 14px; border-radius: 20px; border: none; font-size: 13px; cursor: pointer; }
+        .wallet-card { margin: 14px; background: linear-gradient(135deg, #2c2140, #1c1829); border: 1px solid #432e65; border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .wallet-title { font-size: 12px; color: #9c9cb8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .wallet-amount { font-size: 28px; font-weight: 800; color: #ffd700; margin: 6px 0 14px 0; }
+        .wallet-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-w-action { padding: 9px 0; border-radius: 8px; font-weight: 600; font-size: 13px; border: none; cursor: pointer; text-align: center; text-decoration: none; }
+        .btn-pay { background: #00c988; color: #fff; }
+        .btn-withdraw { background: #33334d; color: #ddd; }
+        .notice-bar { margin: 0 14px 14px 14px; background: #1c1c2b; padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #c4c4dc; }
+        .ticker-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f1c40f; }
+        .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 0 14px 12px 14px; scrollbar-width: none; }
+        .category-scroll::-webkit-scrollbar { display: none; }
+        .cat-chip { padding: 8px 16px; border-radius: 20px; background: #222232; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; border: 1px solid #2d2d42; color: #a5a5c7; }
+        .cat-chip.active { background: linear-gradient(135deg, #d4af37, #b8860b); color: #000; border-color: #ffd700; }
+        .section-title { font-size: 15px; font-weight: 700; color: #f1f2f6; margin: 10px 14px 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+        .games-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 14px 16px 14px; }
+        .game-card { background: #1e1e2d; border-radius: 12px; overflow: hidden; text-decoration: none; color: #fff; border: 1px solid #2e2e44; display: flex; flex-direction: column; transition: transform 0.15s ease; position: relative; }
+        .game-card:active { transform: scale(0.97); }
+        .game-thumb { height: 100px; display: flex; align-items: center; justify-content: center; font-size: 38px; position: relative; }
+        .thumb-wingo { background: linear-gradient(135deg, #ff4757, #9b51e0, #00c988); }
+        .thumb-aviator { background: linear-gradient(135deg, #e81123, #2d0006); }
+        .thumb-mines { background: linear-gradient(135deg, #2e86de, #1e3799); }
+        .thumb-dvt { background: linear-gradient(135deg, #f368e0, #8854d0); }
+        .thumb-k3 { background: linear-gradient(135deg, #ff9f43, #ee5253); }
+        .thumb-5d { background: linear-gradient(135deg, #0abde3, #10ac84); }
+        .thumb-trx { background: linear-gradient(135deg, #ff6b6b, #48dbfb); }
+        .thumb-slots { background: linear-gradient(135deg, #feca57, #ff9f43); }
+        .game-info { padding: 10px 12px; background: #191926; }
+        .game-name { font-size: 14px; font-weight: 700; }
+        .game-tag { font-size: 11px; color: #00c988; margin-top: 2px; }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 450px; background: #181824; border-top: 1px solid #28283c; display: flex; justify-content: space-around; padding: 8px 0; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #7f7f9e; text-decoration: none; font-size: 11px; font-weight: 500; gap: 3px; cursor: pointer; }
+        .nav-item.active { color: #f1c40f; }
+        .nav-icon { font-size: 18px; }
+    </style>
 </head>
 <body>
 
-  <!-- Top Nav -->
-  <div class="top-nav">
-    <div class="tabs">
-      <button class="tab-btn active" id="tabAviatorBtn">⚡ AVIATOR</button>
-      <button class="tab-btn" id="tabColorBtn">🎨 WIN GO</button>
-    </div>
-    <div class="wallet-section">
-      <div class="wallet-card">₹ <span id="walletBalance">1000.00</span></div>
-      <button class="btn-action btn-deposit" id="openDepositBtn">+ Deposit</button>
-      <button class="btn-action btn-withdraw" id="openWithdrawBtn">Withdraw</button>
-    </div>
-  </div>
-
-  <!-- Aviator Section -->
-  <div id="aviatorSection" class="game-section active">
-    <div id="historyStrip" class="history-container"></div>
-    <div class="aviator-canvas-box">
-      <canvas id="gameCanvas" width="660" height="300"></canvas>
-      <div class="overlay">
-        <div id="multiplier" class="multiplier">1.00x</div>
-        <div id="status" class="status">Waiting for round...</div>
-      </div>
-    </div>
-
-    <div class="dual-panels">
-      <div class="bet-box">
-        <div class="panel-header"><span>PANEL 1</span><span id="betStatus1">Ready</span></div>
-        <div class="panel-body">
-          <div class="amount-stepper">
-            <button class="adjust-btn" id="minus1">-</button>
-            <input type="number" id="betInput1" class="bet-input" value="10">
-            <button class="adjust-btn" id="plus1">+</button>
-          </div>
-          <button id="actionBtn1" class="action-btn btn-green">Bet ₹10</button>
+<div class="app-container">
+    <div class="top-header">
+        <div class="logo">BIG DADDY</div>
+        <div class="header-actions">
+            <a href="/admin" class="btn-deposit" style="background:#3d3d5c; color:#fff; text-decoration:none;">Admin</a>
+            <button class="btn-deposit" onclick="alert('Deposit window opening...')">Deposit</button>
         </div>
-      </div>
+    </div>
 
-      <div class="bet-box">
-        <div class="panel-header"><span>PANEL 2</span><span id="betStatus2">Ready</span></div>
-        <div class="panel-body">
-          <div class="amount-stepper">
-            <button class="adjust-btn" id="minus2">-</button>
-            <input type="number" id="betInput2" class="bet-input" value="20">
-            <button class="adjust-btn" id="plus2">+</button>
-          </div>
-          <button id="actionBtn2" class="action-btn btn-green">Bet ₹20</button>
+    <div class="wallet-card">
+        <div class="wallet-title">Total Balance</div>
+        <div class="wallet-amount">₹ 1,000.00</div>
+        <div class="wallet-buttons">
+            <button class="btn-w-action btn-pay" onclick="alert('Add Cash')">+ Add Cash</button>
+            <button class="btn-w-action btn-withdraw" onclick="alert('Minimum withdrawal ₹110')">Withdraw</button>
         </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Color Section -->
-  <div id="colorSection" class="game-section">
-    <div class="color-card">
-      <div class="period-bar">
-        <div>
-          <div style="font-size: 12px; color: #8b949e;">PERIOD</div>
-          <div id="periodDisplay" style="font-size: 18px; font-weight: bold;">Loading...</div>
+    <div class="notice-bar">
+        <span>📢</span>
+        <div class="ticker-text" id="ticker-text">User 98***21 won ₹4,500 in Wingo 1Min!</div>
+    </div>
+
+    <div class="category-scroll">
+        <div class="cat-chip active">All Games</div>
+        <div class="cat-chip">Lottery</div>
+        <div class="cat-chip">Original</div>
+        <div class="cat-chip">Casino</div>
+        <div class="cat-chip">Slots</div>
+    </div>
+
+    <div class="section-title">
+        <span>Popular Games</span>
+        <span style="font-size:12px; color:#d4af37;">Explore All</span>
+    </div>
+
+    <div class="games-grid">
+        <a href="/wingo.html" class="game-card">
+            <div class="game-thumb thumb-wingo">🎨</div>
+            <div class="game-info">
+                <div class="game-name">Win Go 1Min</div>
+                <div class="game-tag">Guess Green / Red</div>
+            </div>
+        </a>
+
+        <a href="/wingo.html" class="game-card">
+            <div class="game-thumb thumb-aviator">✈️</div>
+            <div class="game-info">
+                <div class="game-name">Aviator Crash</div>
+                <div class="game-tag">Up to 100x Multiplier</div>
+            </div>
+        </a>
+
+        <div class="game-card" onclick="alert('Mines is opening soon!')">
+            <div class="game-thumb thumb-mines">💣</div>
+            <div class="game-info">
+                <div class="game-name">Mines</div>
+                <div class="game-tag">Find Gems & Cashout</div>
+            </div>
         </div>
-        <div style="text-align: right;">
-          <div style="font-size: 12px; color: #8b949e;">COUNTDOWN</div>
-          <div id="colorTimerDisplay" class="timer-badge">00:30</div>
+
+        <div class="game-card" onclick="alert('Dragon vs Tiger opening soon!')">
+            <div class="game-thumb thumb-dvt">🐉</div>
+            <div class="game-info">
+                <div class="game-name">Dragon vs Tiger</div>
+                <div class="game-tag">2-Cards Fast Casino</div>
+            </div>
         </div>
-      </div>
 
-      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
-        <span style="font-size: 14px; color: #8b949e;">Bet Amount: ₹</span>
-        <input type="number" id="colorBetAmount" class="bet-input" style="width: 80px;" value="10" min="5" step="5">
-      </div>
+        <div class="game-card" onclick="alert('K3 opening soon!')">
+            <div class="game-thumb thumb-k3">🎲</div>
+            <div class="game-info">
+                <div class="game-name">K3 1Min</div>
+                <div class="game-tag">Sum & Dice Odds</div>
+            </div>
+        </div>
 
-      <div class="colors-group">
-        <button class="color-btn bg-green" id="btnColorGreen">Green (2x)</button>
-        <button class="color-btn bg-violet" id="btnColorViolet">Violet (4.5x)</button>
-        <button class="color-btn bg-red" id="btnColorRed">Red (2x)</button>
-      </div>
-
-      <div class="numbers-grid" id="numberGrid"></div>
-
-      <div style="font-size: 14px; font-weight: bold; margin-top: 10px; color: #8b949e;">Recent Records</div>
-      <table class="history-table">
-        <thead>
-          <tr><th>Period</th><th>Number</th><th>Color</th></tr>
-        </thead>
-        <tbody id="colorHistoryBody"></tbody>
-      </table>
+        <div class="game-card" onclick="alert('Super Ace opening soon!')">
+            <div class="game-thumb thumb-slots">👑</div>
+            <div class="game-info">
+                <div class="game-name">Super Ace</div>
+                <div class="game-tag">Golden Card Slots</div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- Deposit Modal -->
-  <div id="depositModal" class="modal-backdrop">
-    <div class="modal-box">
-      <div class="modal-header">
-        <div class="modal-title">📥 Deposit Balance</div>
-        <button class="close-btn" id="closeDepositBtn">✕</button>
-      </div>
-
-      <div style="background:#0d1117; padding:8px 12px; border-radius:6px; margin-bottom:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center;">
-        <span>UPI: <b id="displayUpiId" style="color:#7ee787;">payment@okaxis</b></span>
-        <button style="background:#238636; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" id="copyUpiBtn">Copy</button>
-      </div>
-
-      <!-- Scannable QR -->
-      <div class="qr-card">
-        <img id="dynamicQrImg" src="" alt="Payment QR Code">
-        <span style="color:#555; font-size:11px; margin-top:4px;">Scan with PhonePe / GPay / Paytm</span>
-      </div>
-
-      <label style="font-size:12px; color:#8b949e;">Deposit Amount (₹):</label>
-      <input type="number" id="depositAmount" class="modal-input" placeholder="Amount (min ₹50)" value="500">
-
-      <label style="font-size:12px; color:#8b949e;">12-digit UTR / Reference No:</label>
-      <input type="text" id="utrInput" class="modal-input" placeholder="Enter UTR after payment">
-
-      <button class="submit-btn" style="background: #28a745; color: white;" id="submitDepositBtn">Submit UTR & Add Balance</button>
+    <div class="bottom-nav">
+        <div class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" onclick="alert('Activity')">
+            <span class="nav-icon">🎁</span>
+            <span>Activity</span>
+        </div>
+        <div class="nav-item" onclick="alert('Promotion')">
+            <span class="nav-icon">👥</span>
+            <span>Promotion</span>
+        </div>
+        <div class="nav-item" onclick="alert('Wallet')">
+            <span class="nav-icon">💳</span>
+            <span>Wallet</span>
+        </div>
+        <div class="nav-item" onclick="alert('Account')">
+            <span class="nav-icon">👤</span>
+            <span>Account</span>
+        </div>
     </div>
-  </div>
+</div>
 
-  <!-- Withdraw Modal -->
-  <div id="withdrawModal" class="modal-backdrop">
-    <div class="modal-box">
-      <div class="modal-header">
-        <div class="modal-title">📤 Withdraw Balance</div>
-        <button class="close-btn" id="closeWithdrawBtn">✕</button>
-      </div>
-      <input type="text" id="withdrawUpi" class="modal-input" placeholder="Enter UPI ID (e.g. user@upi)">
-      <input type="number" id="withdrawAmount" class="modal-input" placeholder="Amount" value="200">
-      <button class="submit-btn" style="background: #3b82f6; color: white;" id="submitWithdrawBtn">Withdraw Now</button>
-    </div>
-  </div>
-
-  <script>
-    const socket = io();
-
-    let currentMerchantUpi = 'payment@okaxis';
-    let customQrImage = null;
-
-    function updateQrCode() {
-      if (customQrImage) {
-        document.getElementById('dynamicQrImg').src = customQrImage;
-      } else {
-        const amt = parseFloat(document.getElementById('depositAmount').value) || 500;
-        const upiUrl = 'upi://pay?pa=' + encodeURIComponent(currentMerchantUpi) + '&pn=GameHub&am=' + amt + '&cu=INR';
-        const qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(upiUrl);
-        document.getElementById('dynamicQrImg').src = qrApi;
-      }
-    }
-
-    socket.on('merchant_payment_update', function(data) {
-      currentMerchantUpi = data.upiId;
-      customQrImage = data.qrImage;
-      document.getElementById('displayUpiId').innerText = currentMerchantUpi;
-      updateQrCode();
-    });
-
-    document.getElementById('depositAmount').addEventListener('input', updateQrCode);
-
-    // Elements
-    const depositModal = document.getElementById('depositModal');
-    const withdrawModal = document.getElementById('withdrawModal');
-    const tabAviator = document.getElementById('tabAviatorBtn');
-    const tabColor = document.getElementById('tabColorBtn');
-    const aviatorSection = document.getElementById('aviatorSection');
-    const colorSection = document.getElementById('colorSection');
-
-    tabAviator.addEventListener('click', function() {
-      tabAviator.classList.add('active');
-      tabColor.classList.remove('active');
-      aviatorSection.classList.add('active');
-      colorSection.classList.remove('active');
-    });
-
-    tabColor.addEventListener('click', function() {
-      tabColor.classList.add('active');
-      tabAviator.classList.remove('active');
-      colorSection.classList.add('active');
-      aviatorSection.classList.remove('active');
-    });
-
-    document.getElementById('openDepositBtn').addEventListener('click', function() {
-      updateQrCode();
-      depositModal.style.display = 'flex';
-    });
-    document.getElementById('openWithdrawBtn').addEventListener('click', function() {
-      withdrawModal.style.display = 'flex';
-    });
-    document.getElementById('closeDepositBtn').addEventListener('click', function() {
-      depositModal.style.display = 'none';
-    });
-    document.getElementById('closeWithdrawBtn').addEventListener('click', function() {
-      withdrawModal.style.display = 'none';
-    });
-
-    document.getElementById('copyUpiBtn').addEventListener('click', function() {
-      navigator.clipboard.writeText(currentMerchantUpi);
-      alert('UPI ID copied: ' + currentMerchantUpi);
-    });
-
-    document.getElementById('submitDepositBtn').addEventListener('click', function() {
-      const amt = parseFloat(document.getElementById('depositAmount').value);
-      const utr = document.getElementById('utrInput').value.trim();
-
-      if (!utr) {
-        alert('Payment karne ke baad 12-digit UTR number enter karein!');
-        return;
-      }
-      socket.emit('request_deposit', { amount: amt, utr: utr });
-      document.getElementById('utrInput').value = '';
-      depositModal.style.display = 'none';
-    });
-
-    document.getElementById('submitWithdrawBtn').addEventListener('click', function() {
-      const amt = parseFloat(document.getElementById('withdrawAmount').value);
-      const upi = document.getElementById('withdrawUpi').value.trim();
-      if (!upi) {
-        alert('Kripya UPI ID enter karein!');
-        return;
-      }
-      socket.emit('request_withdraw', { amount: amt, upiId: upi });
-      withdrawModal.style.display = 'none';
-    });
-
-    socket.on('wallet_update', function(data) {
-      document.getElementById('walletBalance').innerText = data.balance.toFixed(2);
-    });
-    socket.on('wallet_alert', function(data) {
-      alert(data.message);
-    });
-
-    // Aviator Engine
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const multDisplay = document.getElementById('multiplier');
-    const statusDisplay = document.getElementById('status');
-    const historyStrip = document.getElementById('historyStrip');
-
-    let currentMultiplier = 1.00;
-    let aviatorStatus = 'WAITING';
-    const panels = {
-      1: { hasBet: false, amount: 10, cashedOut: false },
-      2: { hasBet: false, amount: 20, cashedOut: false }
-    };
-
-    function updatePanelButton(id) {
-      const p = panels[id];
-      const btn = document.getElementById('actionBtn' + id);
-      const inp = document.getElementById('betInput' + id);
-
-      if (aviatorStatus === 'WAITING') {
-        inp.disabled = p.hasBet;
-        btn.disabled = p.hasBet;
-        btn.className = 'action-btn btn-green';
-        btn.innerText = p.hasBet ? 'Bet Placed' : 'Bet ₹' + inp.value;
-      } else if (aviatorStatus === 'RUNNING') {
-        inp.disabled = true;
-        if (p.hasBet && !p.cashedOut) {
-          btn.disabled = false;
-          btn.className = 'action-btn btn-orange';
-          btn.innerText = 'Cashout ₹' + (p.amount * currentMultiplier).toFixed(2);
-        } else {
-          btn.disabled = true;
-        }
-      } else {
-        btn.disabled = true;
-      }
-    }
-
-    [1, 2].forEach(function(id) {
-      document.getElementById('minus' + id).addEventListener('click', function() {
-        if (panels[id].hasBet) return;
-        const inp = document.getElementById('betInput' + id);
-        inp.value = Math.max(1, (parseFloat(inp.value) || 0) - 5);
-        updatePanelButton(id);
-      });
-
-      document.getElementById('plus' + id).addEventListener('click', function() {
-        if (panels[id].hasBet) return;
-        const inp = document.getElementById('betInput' + id);
-        inp.value = Math.max(1, (parseFloat(inp.value) || 0) + 5);
-        updatePanelButton(id);
-      });
-
-      document.getElementById('actionBtn' + id).addEventListener('click', function() {
-        const p = panels[id];
-        if (aviatorStatus === 'WAITING' && !p.hasBet) {
-          const amt = parseFloat(document.getElementById('betInput' + id).value);
-          socket.emit('place_bet', { panelId: id, amount: amt });
-        } else if (aviatorStatus === 'RUNNING' && p.hasBet && !p.cashedOut) {
-          socket.emit('cashout', { panelId: id });
-        }
-      });
-    });
-
-    function drawPlane(x, y, angle) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(angle);
-      ctx.fillStyle = '#ff2b42';
-      ctx.beginPath();
-      ctx.moveTo(25, 0); ctx.lineTo(-20, -10); ctx.lineTo(-12, 0); ctx.lineTo(-20, 10);
-      ctx.closePath(); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.beginPath();
-      ctx.moveTo(5, 0); ctx.lineTo(-8, -14); ctx.lineTo(-12, -14); ctx.lineTo(-5, 0);
-      ctx.closePath(); ctx.fill();
-      ctx.restore();
-    }
-
-    function renderAviator() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (aviatorStatus === 'RUNNING') {
-        const progress = Math.min((currentMultiplier - 1.00) / 6, 1);
-        const startX = 40, startY = canvas.height - 35;
-        const endX = startX + progress * (canvas.width - 120);
-        const endY = startY - Math.pow(progress, 0.8) * (canvas.height - 90);
-        const cpX = startX + (endX - startX) * 0.6, cpY = startY;
-
-        ctx.beginPath(); ctx.moveTo(startX, startY);
-        ctx.quadraticCurveTo(cpX, cpY, endX, endY);
-        ctx.strokeStyle = '#e61e38'; ctx.lineWidth = 4; ctx.stroke();
-
-        ctx.lineTo(endX, startY); ctx.lineTo(startX, startY);
-        const grad = ctx.createLinearGradient(0, endY, 0, startY);
-        grad.addColorStop(0, 'rgba(230, 30, 56, 0.35)');
-        grad.addColorStop(1, 'rgba(230, 30, 56, 0.0)');
-        ctx.fillStyle = grad; ctx.fill();
-
-        drawPlane(endX, endY, Math.atan2(endY - cpY, endX - cpX));
-      }
-      requestAnimationFrame(renderAviator);
-    }
-    requestAnimationFrame(renderAviator);
-
-    socket.on('history_update', function(hist) {
-      historyStrip.innerHTML = '';
-      hist.forEach(function(mult) {
-        const b = document.createElement('div');
-        b.className = 'history-badge';
-        b.innerText = mult.toFixed(2) + 'x';
-        if (mult < 2.00) b.classList.add('badge-low');
-        else if (mult < 10.00) b.classList.add('badge-mid');
-        else b.classList.add('badge-high');
-        historyStrip.appendChild(b);
-      });
-    });
-
-    socket.on('game_status', function(d) {
-      aviatorStatus = d.status;
-      if (d.status === 'WAITING') {
-        multDisplay.style.color = '#fff'; multDisplay.innerText = 'WAITING';
-        statusDisplay.innerText = d.message || 'Next round starting soon...';
-        [1, 2].forEach(function(id) {
-          panels[id].hasBet = false; panels[id].cashedOut = false;
-          document.getElementById('betStatus' + id).innerText = 'Ready';
-          updatePanelButton(id);
-        });
-      } else if (d.status === 'RUNNING') {
-        statusDisplay.innerText = 'Plane is flying...';
-        [1, 2].forEach(function(id) { updatePanelButton(id); });
-      }
-    });
-
-    socket.on('tick', function(d) {
-      currentMultiplier = d.multiplier;
-      multDisplay.style.color = '#ff2b42';
-      multDisplay.innerText = d.multiplier.toFixed(2) + 'x';
-      [1, 2].forEach(function(id) { updatePanelButton(id); });
-    });
-
-    socket.on('crash', function(d) {
-      aviatorStatus = 'CRASHED';
-      multDisplay.style.color = '#6b7280';
-      multDisplay.innerText = 'FLEW AWAY @ ' + d.crashPoint.toFixed(2) + 'x';
-      statusDisplay.innerText = 'Crash!';
-      [1, 2].forEach(function(id) { updatePanelButton(id); });
-    });
-
-    socket.on('bet_placed', function(d) {
-      panels[d.panelId].hasBet = true;
-      panels[d.panelId].amount = d.amount;
-      document.getElementById('betStatus' + d.panelId).innerText = 'In Game (₹' + d.amount + ')';
-      updatePanelButton(d.panelId);
-    });
-
-    socket.on('cashout_success', function(d) {
-      panels[d.panelId].cashedOut = true;
-      const btn = document.getElementById('actionBtn' + d.panelId);
-      btn.innerText = 'Won ₹' + d.winAmount;
-      btn.disabled = true;
-      document.getElementById('betStatus' + d.panelId).innerText = 'Cashed out @ ' + d.multiplier + 'x';
-    });
-
-    socket.on('bet_error', function(d) { alert(d.message); });
-
-    // Color Game
-    const periodDisplay = document.getElementById('periodDisplay');
-    const colorTimerDisplay = document.getElementById('colorTimerDisplay');
-    const colorHistoryBody = document.getElementById('colorHistoryBody');
-    const colorBetAmount = document.getElementById('colorBetAmount');
-    const grid = document.getElementById('numberGrid');
-
-    for (let i = 0; i < 10; i++) {
-      const b = document.createElement('button');
-      b.className = 'num-btn';
-      b.innerText = i;
-      b.addEventListener('click', function() {
-        const amt = parseFloat(colorBetAmount.value);
-        socket.emit('place_color_bet', { type: 'number', choice: i, amount: amt });
-      });
-      grid.appendChild(b);
-    }
-
-    ['Green', 'Violet', 'Red'].forEach(function(col) {
-      document.getElementById('btnColor' + col).addEventListener('click', function() {
-        const amt = parseFloat(colorBetAmount.value);
-        socket.emit('place_color_bet', { type: 'color', choice: col.toLowerCase(), amount: amt });
-      });
-    });
-
-    socket.on('color_timer', function(d) {
-      periodDisplay.innerText = d.period;
-      const s = d.timer < 10 ? '0' + d.timer : d.timer;
-      colorTimerDisplay.innerText = '00:' + s;
-      colorTimerDisplay.style.color = d.canBet ? '#ffb703' : '#dc3545';
-      document.querySelectorAll('.color-btn, .num-btn').forEach(function(btn) {
-        btn.disabled = !d.canBet;
-      });
-    });
-
-    socket.on('color_history', function(history) {
-      colorHistoryBody.innerHTML = '';
-      history.forEach(function(item) {
-        const row = document.createElement('tr');
-        let pillsHtml = item.colors.map(function(c) {
-          return '<span class="pill bg-' + c + '"></span>';
-        }).join('');
-        row.innerHTML = '<td>' + item.period + '</td><td style="font-weight:bold; font-size:16px;">' + item.number + '</td><td>' + pillsHtml + '</td>';
-        colorHistoryBody.appendChild(row);
-      });
-    });
-
-    socket.on('color_bet_confirmed', function(d) { alert('Bet Placed: ₹' + d.amount + ' on ' + d.choice); });
-    socket.on('color_win', function(d) { alert('🎉 Color Prediction Won! Won: ₹' + d.amount); });
-    socket.on('color_error', function(d) { alert(d.message); });
-  </script>
+<script>
+    const dummyWinners = [
+        "User 91***34 won ₹1,200 in Wingo!",
+        "User 78***11 won ₹8,400 in Aviator!",
+        "User 99***82 won ₹550 in Mines!",
+        "User 80***45 won ₹2,000 in Dragon vs Tiger!"
+    ];
+    let tickerIdx = 0;
+    setInterval(() => {
+        tickerIdx = (tickerIdx + 1) % dummyWinners.length;
+        document.getElementById('ticker-text').innerText = dummyWinners[tickerIdx];
+    }, 3000);
+</script>
 </body>
 </html>
