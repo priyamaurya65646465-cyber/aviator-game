@@ -3,81 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mines - Big Daddy</title>
+    <title>Mines Pro - Big Daddy</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #12121a; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
-        .app-container { width: 100%; max-width: 440px; background: #191924; min-height: 100vh; padding: 15px; display: flex; flex-direction: column; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .back-link { color: #f1c40f; text-decoration: none; font-size: 14px; font-weight: bold; }
-        .wallet-box { background: linear-gradient(135deg, #d4af37, #aa7c11); padding: 6px 14px; border-radius: 20px; font-size: 14px; color: #000; font-weight: bold; }
-        .mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; background: #0e0e15; padding: 12px; border-radius: 12px; }
-        .tile { aspect-ratio: 1; background: #262638; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; border: 2px solid #33334d; }
-        .tile.open-safe { background: #00c988; border-color: #00ffaa; }
-        .tile.open-bomb { background: #ff4757; border-color: #ff6b81; }
-        .control-panel { background: #222232; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px; }
-        .btn-action { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; background: #00c988; color: #fff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background: #0c0f17; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 440px; background: #131722; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+
+        /* Header */
+        .header { background: #181d2a; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #23293b; }
+        .back-btn { color: #f59e0b; text-decoration: none; font-size: 13px; font-weight: 700; }
+        .wallet-pill { background: #1f2638; border: 1px solid #2f3a55; padding: 6px 14px; border-radius: 20px; font-weight: 800; color: #10b981; font-size: 14px; }
+
+        /* Multiplier & Status Ribbon */
+        .status-strip { background: #0f131c; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1c2233; font-size: 13px; }
+        .mult-val { font-size: 20px; font-weight: 900; color: #f59e0b; letter-spacing: 0.5px; }
+
+        /* 5x5 Mines Board */
+        .board-container { padding: 16px; display: flex; justify-content: center; align-items: center; }
+        .mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; max-width: 380px; aspect-ratio: 1; background: #0a0d14; padding: 10px; border-radius: 14px; border: 2px solid #1e2436; }
+
+        /* 3D Tile Flip Styling */
+        .tile { perspective: 800px; aspect-ratio: 1; cursor: pointer; }
+        .tile-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 10px; }
+        .tile.flipped .tile-inner { transform: rotateY(180deg); }
+
+        .tile-front, .tile-back { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+        
+        /* Unopened Tile: Glossy Blueish Slate with 3D Depth */
+        .tile-front { background: linear-gradient(180deg, #2b354c 0%, #1a2030 100%); border: 1px solid #3d4b6c; box-shadow: 0 4px 0 #10141f, 0 5px 8px rgba(0,0,0,0.5); }
+        .tile-front:active { transform: translateY(2px); box-shadow: 0 2px 0 #10141f; }
+
+        /* Opened Tiles */
+        .tile-back { transform: rotateY(180deg); }
+        .tile-back.gem { background: radial-gradient(circle, #059669 0%, #064e3b 100%); border: 1px solid #10b981; box-shadow: inset 0 0 12px rgba(16,185,129,0.6); }
+        .tile-back.bomb { background: radial-gradient(circle, #dc2626 0%, #7f1d1d 100%); border: 1px solid #ef4444; box-shadow: inset 0 0 15px rgba(239,68,68,0.8); }
+
+        /* Shake Animation on Bomb */
+        .shake-screen { animation: shake 0.4s ease-in-out; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        /* Controls Deck */
+        .control-deck { background: #161b27; padding: 16px; border-top: 1px solid #242b3d; display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
+        .deck-row { display: flex; justify-content: space-between; align-items: center; }
+        .label { font-size: 12px; font-weight: 700; color: #8a99ad; text-transform: uppercase; }
+
+        .custom-select, .custom-input { background: #0b0e14; border: 1px solid #2d364d; border-radius: 8px; color: #fff; padding: 8px 12px; font-size: 15px; font-weight: 800; text-align: center; }
+        .custom-select { width: 130px; }
+        .custom-input { width: 130px; }
+
+        .chip-group { display: flex; gap: 6px; }
+        .chip { flex: 1; background: #202738; border: 1px solid #2e3852; color: #b4c2d6; padding: 6px 0; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; text-align: center; }
+        .chip:active { background: #2e3852; }
+
+        .btn-action { width: 100%; padding: 15px; border-radius: 10px; border: none; font-size: 16px; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: transform 0.05s ease; }
+        .btn-action:active { transform: scale(0.98); }
+        .btn-start { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
+        .btn-cashout { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; box-shadow: 0 4px 15px rgba(245,158,11,0.4); animation: pulse 0.8s infinite alternate; }
+        .btn-disabled { background: #222838; color: #526079; cursor: not-allowed; }
+
+        @keyframes pulse { from { filter: brightness(1); } to { filter: brightness(1.2); } }
     </style>
 </head>
 <body>
-<div class="app-container">
+
+<div class="app-container" id="app">
     <div class="header">
-        <a href="/" class="back-link">⬅ Lobby</a>
-        <div class="wallet-box" id="wallet-balance">₹ 1000.00</div>
+        <a href="/" class="back-btn">◀ LOBBY</a>
+        <div class="wallet-pill" id="wallet-text">₹ 1,000.00</div>
     </div>
-    <div style="background:#222232; padding:10px; border-radius:8px; text-align:center; font-weight:bold; color:#00ffcc;" id="mult-banner">
-        Multiplier: 1.00x
+
+    <div class="status-strip">
+        <span class="label" id="status-label">Next Tile: <b style="color:#fff;" id="next-mult">1.18x</b></span>
+        <span class="mult-val" id="mult-display">1.00x</span>
     </div>
-    <div class="mines-grid" id="grid"></div>
-    <div class="control-panel">
-        <button class="btn-action" id="main-btn" onclick="startGame()">START MINES GAME</button>
+
+    <div class="board-container">
+        <div class="mines-grid" id="mines-grid"></div>
+    </div>
+
+    <div class="control-deck">
+        <div class="chip-group">
+            <button class="chip" onclick="setBet(50)">+50</button>
+            <button class="chip" onclick="setBet(100)">+100</button>
+            <button class="chip" onclick="setBet(200)">+200</button>
+            <button class="chip" onclick="setBet(500)">+500</button>
+        </div>
+
+        <div class="deck-row">
+            <span class="label">Bet Amount (₹)</span>
+            <input type="number" id="bet-amt" class="custom-input" value="50" min="10" step="10">
+        </div>
+
+        <div class="deck-row">
+            <span class="label">Number of Mines</span>
+            <select id="mine-select" class="custom-select">
+                <option value="1">1 Mine</option>
+                <option value="3" selected>3 Mines</option>
+                <option value="5">5 Mines</option>
+                <option value="10">10 Mines</option>
+                <option value="24">24 Mines (Extreme)</option>
+            </select>
+        </div>
+
+        <button class="btn-action btn-start" id="main-btn" onclick="handleGameButton()">START GAME</button>
     </div>
 </div>
 
 <script>
-    let gridEl = document.getElementById('grid');
-    let playing = false;
-    let bombPos = [];
-    let currentMult = 1.0;
-
-    function renderGrid() {
-        gridEl.innerHTML = '';
-        for(let i=0; i<25; i++) {
-            let t = document.createElement('div');
-            t.className = 'tile';
-            t.onclick = () => openTile(i, t);
-            gridEl.appendChild(t);
-        }
-    }
-    renderGrid();
-
-    function startGame() {
-        playing = true;
-        currentMult = 1.0;
-        document.getElementById('mult-banner').innerText = 'Multiplier: 1.00x';
-        document.getElementById('main-btn').innerText = 'CLICK ON TILES';
-        renderGrid();
-        bombPos = [];
-        while(bombPos.length < 3) {
-            let r = Math.floor(Math.random() * 25);
-            if(!bombPos.includes(r)) bombPos.push(r);
-        }
+    // Audio FX using Web Audio API
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type = 'sine', duration = 0.1) {
+        try {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e){}
     }
 
-    function openTile(idx, tile) {
-        if(!playing || tile.classList.contains('open-safe')) return;
-        if(bombPos.includes(idx)) {
-            tile.classList.add('open-bomb');
-            tile.innerText = '💣';
-            document.getElementById('mult-banner').innerText = 'BOOM! GAME OVER';
-            playing = false;
-            document.getElementById('main-btn').innerText = 'START AGAIN';
+    // Shared Wallet Sync
+    let balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
+    const walletText = document.getElementById('wallet-text');
+    function updateWallet() {
+        walletText.innerText = `₹ ${balance.toFixed(2)}`;
+        localStorage.setItem('bdg_balance', balance);
+    }
+    updateWallet();
+
+    // Game Variables
+    let isPlaying = false;
+    let bombLocations = [];
+    let openedCount = 0;
+    let currentMultiplier = 1.00;
+    let activeBet = 50;
+    let totalMines = 3;
+
+    const grid = document.getElementById('mines-grid');
+    const mainBtn = document.getElementById('main-btn');
+    const multDisplay = document.getElementById('mult-display');
+    const nextMult = document.getElementById('next-mult');
+    const betInput = document.getElementById('bet-amt');
+    const mineSelect = document.getElementById('mine-select');
+
+    function setBet(amt) {
+        if (isPlaying) return;
+        betInput.value = amt;
+        playTone(400);
+    }
+
+    // Mathematical Fair Multiplier Formula
+    function calcMultiplier(revealed, mines) {
+        let mult = 1.0;
+        let safeTiles = 25 - mines;
+        for (let i = 0; i < revealed; i++) {
+            mult *= (25 - i) / (safeTiles - i);
+        }
+        return parseFloat((mult * 0.96).toFixed(2)); // 4% House edge
+    }
+
+    // Render Initial Board
+    function renderBoard() {
+        grid.innerHTML = '';
+        for (let i = 0; i < 25; i++) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.dataset.index = i;
+            tile.innerHTML = `
+                <div class="tile-inner">
+                    <div class="tile-front"></div>
+                    <div class="tile-back" id="back-${i}"></div>
+                </div>
+            `;
+            tile.onclick = () => revealTile(i, tile);
+            grid.appendChild(tile);
+        }
+    }
+    renderBoard();
+
+    function handleGameButton() {
+        if (!isPlaying) {
+            // Start Game
+            activeBet = parseFloat(betInput.value) || 50;
+            totalMines = parseInt(mineSelect.value);
+
+            if (activeBet > balance || activeBet <= 0) return alert('Invalid Bet Amount or Low Balance!');
+
+            balance -= activeBet;
+            updateWallet();
+
+            isPlaying = true;
+            openedCount = 0;
+            currentMultiplier = 1.00;
+            multDisplay.innerText = '1.00x';
+            nextMult.innerText = calcMultiplier(1, totalMines) + 'x';
+
+            // Random Mines Generation
+            bombLocations = [];
+            while (bombLocations.length < totalMines) {
+                let r = Math.floor(Math.random() * 25);
+                if (!bombLocations.includes(r)) bombLocations.push(r);
+            }
+
+            renderBoard();
+            playTone(520, 'sine', 0.2);
+
+            mainBtn.className = 'btn-action btn-disabled';
+            mainBtn.innerText = 'PICK A TILE';
+            mineSelect.disabled = true;
+            betInput.disabled = true;
         } else {
-            tile.classList.add('open-safe');
-            tile.innerText = '💎';
-            currentMult = (currentMult * 1.3).toFixed(2);
-            document.getElementById('mult-banner').innerText = `Multiplier: ${currentMult}x`;
+            // Cashout Action
+            if (openedCount === 0) return;
+
+            let winAmount = parseFloat((activeBet * currentMultiplier).toFixed(2));
+            balance += winAmount;
+            updateWallet();
+            playTone(880, 'triangle', 0.35);
+
+            alert(`🎉 CASHOUT SUCCESSFUL!\nYou Won: ₹${winAmount.toFixed(2)} (${currentMultiplier}x)`);
+            endGame(false);
         }
+    }
+
+    function revealTile(idx, tileEl) {
+        if (!isPlaying || tileEl.classList.contains('flipped')) return;
+
+        tileEl.classList.add('flipped');
+        const back = document.getElementById(`back-${idx}`);
+
+        if (bombLocations.includes(idx)) {
+            // Hit Bomb!
+            back.classList.add('bomb');
+            back.innerText = '💣';
+            playTone(130, 'sawtooth', 0.4);
+
+            document.getElementById('app').classList.add('shake-screen');
+            setTimeout(() => document.getElementById('app').classList.remove('shake-screen'), 400);
+
+            multDisplay.innerText = 'CRASHED';
+            multDisplay.style.color = '#ef4444';
+            endGame(true);
+        } else {
+            // Safe Diamond!
+            back.classList.add('gem');
+            back.innerText = '💎';
+            playTone(600 + openedCount * 40, 'sine', 0.15);
+
+            openedCount++;
+            currentMultiplier = calcMultiplier(openedCount, totalMines);
+            multDisplay.innerText = currentMultiplier.toFixed(2) + 'x';
+            multDisplay.style.color = '#10b981';
+
+            let nextVal = calcMultiplier(openedCount + 1, totalMines);
+            nextMult.innerText = nextVal + 'x';
+
+            let currentWin = (activeBet * currentMultiplier).toFixed(2);
+            mainBtn.className = 'btn-action btn-cashout';
+            mainBtn.innerText = `CASHOUT ₹${currentWin}`;
+        }
+    }
+
+    function endGame(exploded) {
+        isPlaying = false;
+        mineSelect.disabled = false;
+        betInput.disabled = false;
+
+        // Reveal Remaining Tiles
+        for (let i = 0; i < 25; i++) {
+            const t = grid.children[i];
+            if (!t.classList.contains('flipped')) {
+                t.classList.add('flipped');
+                const b = document.getElementById(`back-${i}`);
+                if (bombLocations.includes(i)) {
+                    b.classList.add('bomb');
+                    b.innerText = '💣';
+                } else {
+                    b.classList.add('gem');
+                    b.innerText = '💎';
+                }
+                b.style.opacity = '0.45';
+            }
+        }
+
+        setTimeout(() => {
+            mainBtn.className = 'btn-action btn-start';
+            mainBtn.innerText = 'START GAME';
+            multDisplay.style.color = '#f59e0b';
+        }, 1500);
     }
 </script>
 </body>
