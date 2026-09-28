@@ -1,322 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    body {
-      background-color: #0b0e14;
-      color: #e6edf3;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-    .auth-card {
-      width: 360px;
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 30px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    }
-    .auth-card h3 { margin-top: 0; color: #ff3344; }
-    .auth-card p { font-size: 13px; color: #8b949e; margin-bottom: 20px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Daddy - Master Admin Control</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: #0c0e17; color: #fff; display: flex; justify-content: center; padding: 20px; }
+        .admin-wrap { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 18px; }
 
-    .admin-card {
-      display: none;
-      width: 640px;
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    h2 { margin-top: 0; color: #ff3344; display: flex; justify-content: space-between; align-items: center; }
-    .status-badge {
-      font-size: 13px;
-      background: #21262d;
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid #30363d;
-      color: #7ee787;
-    }
-    .section-title {
-      font-size: 15px;
-      font-weight: bold;
-      color: #58a6ff;
-      margin: 18px 0 8px 0;
-      border-bottom: 1px solid #21262d;
-      padding-bottom: 4px;
-    }
-    .form-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    input {
-      padding: 10px 14px;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-      box-sizing: border-box;
-    }
-    button {
-      padding: 10px 18px;
-      font-size: 14px;
-      font-weight: bold;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-set { background: #238636; color: #fff; }
-    .btn-set:hover { background: #2ea043; }
-    .btn-reset { background: #da3633; color: #fff; }
+        .top-bar { background: #161a29; border: 1px solid #232b40; border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
+        .top-bar h1 { font-size: 18px; color: #f59e0b; letter-spacing: 1px; }
+        .back-link { color: #8a99ad; text-decoration: none; font-size: 13px; font-weight: 700; }
 
-    .color-presets { display: flex; gap: 8px; margin-bottom: 12px; }
-    .preset-btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; color: white; cursor: pointer; }
-    .p-green { background: #28a745; }
-    .p-violet { background: #9333ea; }
-    .p-red { background: #dc3545; }
+        .card { background: #131724; border: 1px solid #20273c; border-radius: 14px; padding: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .card-header { font-size: 15px; font-weight: 900; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #20273c; padding-bottom: 8px; }
+        
+        .badge { font-size: 11px; padding: 4px 8px; border-radius: 12px; font-weight: 800; background: #222b42; color: #60a5fa; }
+        .badge.active { background: #064e3b; color: #34d399; }
 
-    .live-status-box {
-      background: #0d1117;
-      border: 1px dashed #30363d;
-      border-radius: 8px;
-      padding: 14px;
-      margin-top: 15px;
-      font-family: monospace;
-      font-size: 14px;
-    }
-    .live-status-box span { color: #f0883e; font-weight: bold; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .input-group label { font-size: 12px; color: #8a99ad; font-weight: 700; text-transform: uppercase; }
 
-    .table-container {
-      margin-top: 10px;
-      background: #0d1117;
-      border-radius: 8px;
-      border: 1px solid #30363d;
-      overflow: hidden;
-    }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #21262d; }
-    th { background: #161b22; color: #8b949e; }
-    .nav-link { color: #58a6ff; text-decoration: none; font-size: 14px; }
-    .qr-preview-box {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      background: #0d1117;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-    }
-    .qr-preview-box img {
-      width: 70px;
-      height: 70px;
-      background: #fff;
-      border-radius: 6px;
-      object-fit: contain;
-    }
-  </style>
+        .row-inputs { display: flex; gap: 8px; }
+        .num-input { flex: 1; background: #090c13; border: 1px solid #28334d; border-radius: 8px; color: #fff; padding: 10px 14px; font-size: 16px; font-weight: 800; }
+        .btn-set { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; border: none; border-radius: 8px; font-weight: 900; font-size: 13px; padding: 0 18px; cursor: pointer; text-transform: uppercase; }
+        .btn-set:active { transform: scale(0.97); }
+
+        .quick-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+        .btn-quick { background: #1c2235; border: 1px solid #2c3752; color: #cbd5e1; border-radius: 6px; padding: 8px 0; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; }
+        .btn-quick:active { background: #2c3752; }
+
+        .numbers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
+        .num-ball-btn { aspect-ratio: 1; border-radius: 50%; border: 2px solid #2b354d; background: #181f30; color: #fff; font-size: 16px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .num-ball-btn:active { transform: scale(0.92); }
+        .num-ball-btn.green { border-color: #10b981; }
+        .num-ball-btn.red { border-color: #ef4444; }
+        .num-ball-btn.violet { border-color: #a855f7; }
+
+        .status-box { font-size: 12px; color: #94a3b8; line-height: 1.6; margin-top: 10px; background: #0b0e16; padding: 10px; border-radius: 8px; border: 1px dashed #232c40; }
+    </style>
 </head>
 <body>
 
-  <!-- Lock Screen -->
-  <div id="authScreen" class="auth-card">
-    <h3>🔒 Admin Authentication</h3>
-    <p>Admin controls access karne ke liye PIN enter karein.</p>
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      <input type="password" id="pinInput" placeholder="Enter Secret PIN" style="width: 100%;">
-      <button class="btn-set" onclick="verifyPin()">Unlock Dashboard</button>
-    </div>
-    <div id="authError" style="color: #f85149; font-size: 13px; margin-top: 10px;"></div>
-  </div>
-
-  <!-- Dashboard -->
-  <div id="dashboardScreen" class="admin-card">
-    <h2>
-      🛠️ Game & Payment Control
-      <span class="status-badge">Authenticated</span>
-    </h2>
-
-    <!-- Dynamic UPI Management -->
-    <div class="section-title">💳 Deposit UPI ID Configuration</div>
-    <div class="form-row">
-      <input type="text" id="upiInput" placeholder="Enter New UPI ID (e.g. yourname@upi)" style="flex:1;">
-      <button class="btn-set" onclick="updateMerchantUpi()">Update UPI</button>
+<div class="admin-wrap">
+    <div class="top-bar">
+        <h1>⚙️ MASTER ADMIN</h1>
+        <a href="/" class="back-link">◀ BACK TO LOBBY</a>
     </div>
 
-    <!-- QR Code Image Upload -->
-    <div class="section-title">🖼️ Upload Custom QR Code Image</div>
-    <div class="qr-preview-box">
-      <img id="adminQrPreview" src="" alt="No Custom QR">
-      <div style="flex:1;">
-        <input type="file" id="qrFileInput" accept="image/*" style="font-size:12px; color:#8b949e; margin-bottom:8px;">
-        <div style="display:flex; gap:8px;">
-          <button class="btn-set" style="padding:6px 12px; font-size:12px;" onclick="uploadQrFile()">Upload Image</button>
-          <button class="btn-reset" style="padding:6px 12px; font-size:12px;" onclick="resetQrFile()">Use Auto QR</button>
+    <!-- Aviator Control -->
+    <div class="card">
+        <div class="card-header">
+            <span>✈️ Aviator Crash Target</span>
+            <span class="badge" id="aviator-status">Auto RNG</span>
         </div>
-      </div>
+        <p style="font-size:12px; color:#8a99ad;">Agle round ka exact crash multiplier yahan set karein:</p>
+        
+        <div class="input-group">
+            <div class="row-inputs">
+                <input type="number" id="aviator-input" class="num-input" placeholder="e.g. 1.20 or 10.50" step="0.05">
+                <button class="btn-set" onclick="setAviatorTarget()">SET CRASH</button>
+            </div>
+        </div>
+
+        <div class="quick-buttons">
+            <button class="btn-quick" onclick="quickSetAviator(1.05)">1.05x (Drop)</button>
+            <button class="btn-quick" onclick="quickSetAviator(1.50)">1.50x</button>
+            <button class="btn-quick" onclick="quickSetAviator(2.00)">2.00x</button>
+            <button class="btn-quick" onclick="quickSetAviator(10.00)">10.00x (Pump)</button>
+        </div>
     </div>
 
-    <!-- Recent Deposit Receipts -->
-    <div class="section-title">📥 Recent Deposits (UTR Records)</div>
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr><th>Time</th><th>User ID</th><th>Amount</th><th>UTR Number</th></tr>
-        </thead>
-        <tbody id="depositTableBody">
-          <tr><td colspan="4" style="text-align:center; color:#8b949e;">No deposits received yet.</td></tr>
-        </tbody>
-      </table>
+    <!-- Win Go Control -->
+    <div class="card">
+        <div class="card-header">
+            <span>🎨 Win Go Next Result</span>
+            <span class="badge" id="wingo-status">Auto RNG</span>
+        </div>
+        <p style="font-size:12px; color:#8a99ad;">Agli lottery ball ka number pre-decide karein (0 to 9):</p>
+
+        <div class="numbers-grid">
+            <button class="num-ball-btn violet" onclick="setWingoTarget(0)">0</button>
+            <button class="num-ball-btn green" onclick="setWingoTarget(1)">1</button>
+            <button class="num-ball-btn red" onclick="setWingoTarget(2)">2</button>
+            <button class="num-ball-btn green" onclick="setWingoTarget(3)">3</button>
+            <button class="num-ball-btn red" onclick="setWingoTarget(4)">4</button>
+            <button class="num-ball-btn violet" onclick="setWingoTarget(5)">5</button>
+            <button class="num-ball-btn red" onclick="setWingoTarget(6)">6</button>
+            <button class="num-ball-btn green" onclick="setWingoTarget(7)">7</button>
+            <button class="num-ball-btn red" onclick="setWingoTarget(8)">8</button>
+            <button class="num-ball-btn green" onclick="setWingoTarget(9)">9</button>
+        </div>
+
+        <div class="status-box" id="live-info">
+            Loading live system status...
+        </div>
     </div>
+</div>
 
-    <!-- Aviator Controller -->
-    <div class="section-title">✈️ Aviator Crash Override</div>
-    <div class="form-row">
-      <input type="number" id="crashInput" placeholder="Next Crash (e.g. 1.20 or 15.00)" step="0.1" style="flex:1;">
-      <button class="btn-set" onclick="setCrash()">Set Next Crash</button>
-    </div>
+<script>
+    async function updateStatus() {
+        try {
+            const res = await fetch('/api/admin/status');
+            const data = await res.json();
+            
+            // Aviator status
+            const aBadge = document.getElementById('aviator-status');
+            if (data.nextAviatorOverride !== null) {
+                aBadge.className = 'badge active';
+                aBadge.innerText = `OVERRIDE: ${data.nextAviatorOverride}x`;
+            } else {
+                aBadge.className = 'badge';
+                aBadge.innerText = 'AUTO RNG';
+            }
 
-    <!-- Color Prediction Controller -->
-    <div class="section-title">🎨 Color Prediction Override</div>
-    <div class="color-presets">
-      <button class="preset-btn p-green" onclick="setColorNumber(7)">Force Green (7)</button>
-      <button class="preset-btn p-violet" onclick="setColorNumber(5)">Force Violet (5)</button>
-      <button class="preset-btn p-red" onclick="setColorNumber(2)">Force Red (2)</button>
-    </div>
-    <div class="form-row">
-      <input type="number" id="numberInput" placeholder="Force Number (0 to 9)" min="0" max="9" style="flex:1;">
-      <button class="btn-set" onclick="setNumberDirect()">Set Winning Number</button>
-    </div>
+            // Wingo status
+            const wBadge = document.getElementById('wingo-status');
+            if (data.nextWingoOverride !== null) {
+                wBadge.className = 'badge active';
+                wBadge.innerText = `NEXT: #${data.nextWingoOverride}`;
+            } else {
+                wBadge.className = 'badge';
+                wBadge.innerText = 'AUTO RNG';
+            }
 
-    <!-- Live Status Overview -->
-    <div class="live-status-box">
-      <div>Active Deposit UPI: <span id="activeUpiStatus" style="color:#7ee787;">payment@okaxis</span></div>
-      <div style="margin-top: 6px;">Custom QR Mode: <span id="activeQrStatus" style="color:#58a6ff;">AUTO-GENERATED</span></div>
-      <div style="margin-top: 6px;">Active Crash Override: <span id="activeCrashStatus">AUTO (RANDOM)</span></div>
-      <div style="margin-top: 6px;">Active Color/Num Override: <span id="activeColorStatus">AUTO (RANDOM)</span></div>
-    </div>
-
-    <div style="margin-top: 18px; display: flex; justify-content: space-between; align-items: center;">
-      <button class="btn-reset" onclick="clearOverrides()">Clear All Overrides (Auto Mode)</button>
-      <a href="/" target="_blank" class="nav-link">Open Player View ↗</a>
-    </div>
-  </div>
-
-  <script>
-    const socket = io();
-
-    function verifyPin() {
-      const pin = document.getElementById('pinInput').value.trim();
-      if (!pin) return;
-      socket.emit('admin_login', { pin: pin });
+            document.getElementById('live-info').innerHTML = `
+                <b>Current Period:</b> ${data.currentPeriod}<br>
+                <b>Win Go Countdown:</b> ${data.wingoTimer}s<br>
+                <b>Aviator Multiplier:</b> ${data.currentAviatorMult}x
+            `;
+        } catch(e){}
     }
 
-    document.getElementById('pinInput').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') verifyPin();
-    });
+    setInterval(updateStatus, 1000);
+    updateStatus();
 
-    socket.on('admin_login_success', function() {
-      document.getElementById('authScreen').style.display = 'none';
-      document.getElementById('dashboardScreen').style.display = 'block';
-    });
-
-    socket.on('admin_login_error', function(data) {
-      document.getElementById('authError').innerText = data.message;
-    });
-
-    socket.on('admin_alert', function(data) {
-      alert(data.message);
-    });
-
-    function updateMerchantUpi() {
-      const upi = document.getElementById('upiInput').value.trim();
-      if (!upi) return alert('UPI ID enter kijiye!');
-      socket.emit('admin_update_upi', { upiId: upi });
-      document.getElementById('upiInput').value = '';
+    async function setAviatorTarget() {
+        const val = parseFloat(document.getElementById('aviator-input').value);
+        if (!val || val < 1.01) return alert('Enter a valid multiplier (min 1.01)');
+        
+        const res = await fetch('/api/admin/set-aviator', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ crashPoint: val })
+        });
+        const data = await res.json();
+        alert(data.message);
+        document.getElementById('aviator-input').value = '';
+        updateStatus();
     }
 
-    // Convert Image file to Base64 and send
-    function uploadQrFile() {
-      const file = document.getElementById('qrFileInput').files[0];
-      if (!file) return alert('Kripya ek QR code image select karein!');
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        socket.emit('admin_upload_qr', { image: e.target.result });
-      };
-      reader.readAsDataURL(file);
+    function quickSetAviator(amt) {
+        document.getElementById('aviator-input').value = amt;
+        setAviatorTarget();
     }
 
-    function resetQrFile() {
-      socket.emit('admin_reset_qr');
+    async function setWingoTarget(num) {
+        const res = await fetch('/api/admin/set-wingo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ number: num })
+        });
+        const data = await res.json();
+        alert(data.message);
+        updateStatus();
     }
-
-    function setCrash() {
-      const val = parseFloat(document.getElementById('crashInput').value);
-      if (isNaN(val) || val < 1.01) return alert('Multiplier must be at least 1.01x');
-      socket.emit('admin_set_crash', { multiplier: val });
-      document.getElementById('crashInput').value = '';
-    }
-
-    function setColorNumber(num) {
-      socket.emit('admin_set_color', { number: num });
-    }
-
-    function setNumberDirect() {
-      const val = parseInt(document.getElementById('numberInput').value);
-      if (isNaN(val) || val < 0 || val > 9) return alert('Enter a number between 0 and 9');
-      socket.emit('admin_set_color', { number: val });
-      document.getElementById('numberInput').value = '';
-    }
-
-    function clearOverrides() {
-      socket.emit('admin_clear_overrides');
-    }
-
-    socket.on('admin_state_update', function(data) {
-      if (data.currentUpi) {
-        document.getElementById('activeUpiStatus').innerText = data.currentUpi;
-      }
-      if (data.currentQr) {
-        document.getElementById('adminQrPreview').src = data.currentQr;
-        document.getElementById('activeQrStatus').innerText = 'CUSTOM IMAGE ACTIVE';
-      } else {
-        document.getElementById('adminQrPreview').src = 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=upi://pay';
-        document.getElementById('activeQrStatus').innerText = 'AUTO-GENERATED';
-      }
-      document.getElementById('activeCrashStatus').innerText = data.nextCrash ? (data.nextCrash.toFixed(2) + 'x (FORCED)') : 'AUTO (RANDOM)';
-      document.getElementById('activeColorStatus').innerText = data.nextColor !== null ? ('Number ' + data.nextColor + ' (FORCED)') : 'AUTO (RANDOM)';
-    });
-
-    socket.on('admin_deposit_update', function(records) {
-      const tbody = document.getElementById('depositTableBody');
-      if (!records || records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#8b949e;">No deposits received yet.</td></tr>';
-        return;
-      }
-      tbody.innerHTML = '';
-      records.forEach(function(r) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td>' + r.time + '</td><td>User#' + r.socketId + '</td><td style="color:#7ee787; font-weight:bold;">₹' + r.amount + '</td><td style="font-family:monospace; color:#58a6ff;">' + r.utr + '</td>';
-        tbody.appendChild(tr);
-      });
-    });
-  </script>
+</script>
 </body>
 </html>
