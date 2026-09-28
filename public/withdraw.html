@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Withdraw Funds - Big Daddy</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background: #0c0e17; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 440px; background: #121622; min-height: 100vh; padding-bottom: 30px; display: flex; flex-direction: column; }
+
+        .header { background: #181d2c; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #242c42; }
+        .back-btn { color: #f59e0b; text-decoration: none; font-size: 13px; font-weight: 700; }
+        .title { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
+
+        .bal-card { background: linear-gradient(135deg, #221c38, #181528); margin: 12px; padding: 16px; border-radius: 12px; border: 1px solid #3d2f5e; display: flex; justify-content: space-between; align-items: center; }
+        .bal-label { font-size: 12px; color: #a49fc2; font-weight: 600; text-transform: uppercase; }
+        .bal-val { font-size: 22px; font-weight: 900; color: #ffd700; }
+
+        .section { margin: 0 12px 14px 12px; }
+        .sec-title { font-size: 12px; font-weight: 800; color: #8a99ad; text-transform: uppercase; margin-bottom: 8px; }
+
+        .mode-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+        .mode-tab { flex: 1; padding: 10px 0; text-align: center; background: #181e2d; border: 1px solid #27334a; border-radius: 8px; font-size: 13px; font-weight: 800; color: #94a3b8; cursor: pointer; }
+        .mode-tab.active { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; border-color: #ffd700; }
+
+        .form-card { background: #161c2a; border: 1px solid #263148; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-label { font-size: 11px; font-weight: 700; color: #8fa0b5; text-transform: uppercase; }
+        .custom-input { background: #0b0e16; border: 1px solid #2c3854; border-radius: 8px; color: #fff; padding: 10px 14px; font-size: 14px; font-weight: 700; outline: none; }
+
+        .btn-submit { width: calc(100% - 24px); margin: 16px 12px 0 12px; padding: 14px; border-radius: 10px; border: none; font-size: 15px; font-weight: 900; background: linear-gradient(135deg, #10b981, #059669); color: #fff; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
+        .btn-submit:active { transform: scale(0.98); }
+
+        .hist-card { margin: 16px 12px 0 12px; background: #161a25; border-radius: 12px; padding: 14px; border: 1px solid #232938; }
+        .hist-title { font-size: 13px; font-weight: 800; color: #cbd5e1; margin-bottom: 10px; }
+        .hist-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .hist-table th { color: #64748b; padding: 6px 4px; text-align: left; }
+        .hist-table td { padding: 8px 4px; text-align: left; border-top: 1px solid #1f2533; font-weight: 700; }
+
+        .badge { padding: 3px 8px; border-radius: 4px; font-weight: 800; font-size: 11px; display: inline-block; }
+        .badge-pending { color: #f59e0b; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); }
+        .badge-success { color: #10b981; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); }
+        .badge-rejected { color: #ef4444; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); }
+
+        .tips { margin: 14px 16px; font-size: 11px; color: #64748b; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <a href="/" class="back-btn">◀ LOBBY</a>
+        <div class="title">WITHDRAW CASH</div>
+        <div style="width: 40px;"></div>
+    </div>
+
+    <!-- Balance Banner -->
+    <div class="bal-card">
+        <div>
+            <div class="bal-label">Withdrawable Balance</div>
+            <div class="bal-val" id="wallet-text">₹ 1,000.00</div>
+        </div>
+        <span style="font-size:26px;">💳</span>
+    </div>
+
+    <!-- Payout Form -->
+    <div class="section">
+        <div class="sec-title">Select Payout Method</div>
+        <div class="mode-tabs">
+            <div class="mode-tab active" id="tab-bank" onclick="switchMethod('bank')">Bank Card</div>
+            <div class="mode-tab" id="tab-upi" onclick="switchMethod('upi')">UPI Transfer</div>
+        </div>
+
+        <div class="form-card">
+            <div id="bank-fields">
+                <div class="input-group">
+                    <label class="input-label">Account Holder Name</label>
+                    <input type="text" id="w-name" class="custom-input" placeholder="Full name as on bank">
+                </div>
+                <div class="input-group" style="margin-top: 10px;">
+                    <label class="input-label">Bank Account Number</label>
+                    <input type="password" id="w-acc" class="custom-input" placeholder="Enter bank account number">
+                </div>
+                <div class="input-group" style="margin-top: 10px;">
+                    <label class="input-label">IFSC Code</label>
+                    <input type="text" id="w-ifsc" class="custom-input" placeholder="e.g. SBIN0001234" style="text-transform:uppercase;">
+                </div>
+            </div>
+
+            <div id="upi-fields" style="display: none;">
+                <div class="input-group">
+                    <label class="input-label">Your UPI ID (VPA)</label>
+                    <input type="text" id="w-upi" class="custom-input" placeholder="e.g. 9876543210@paytm">
+                </div>
+            </div>
+
+            <div class="input-group" style="margin-top: 10px;">
+                <label class="input-label">Withdrawal Amount (Min ₹110)</label>
+                <input type="number" id="w-amt" class="custom-input" placeholder="Enter amount (₹)" min="110">
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitWithdrawal()">SUBMIT WITHDRAWAL</button>
+
+    <div class="tips">
+        📌 <b>Note:</b> Request submit hone par status <b>"Pending"</b> rahega. Admin approval ke baad status <b>"Success"</b> show hoga.
+    </div>
+
+    <!-- Live Withdrawal Records -->
+    <div class="hist-card">
+        <div class="hist-title">Live Withdrawal Status</div>
+        <table class="hist-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="hist-records">
+                <tr><td colspan="4" style="text-align:center; color:#64748b; padding:12px;">Loading records...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const authUser = localStorage.getItem('bdg_auth_user');
+    if (!authUser) window.location.href = '/login.html';
+
+    let balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
+    const walletText = document.getElementById('wallet-text');
+    function updateWallet() {
+        walletText.innerText = `₹ ${balance.toFixed(2)}`;
+        localStorage.setItem('bdg_balance', balance);
+    }
+    updateWallet();
+
+    let currentMode = 'bank';
+    function switchMethod(mode) {
+        currentMode = mode;
+        if (mode === 'bank') {
+            document.getElementById('tab-bank').classList.add('active');
+            document.getElementById('tab-upi').classList.remove('active');
+            document.getElementById('bank-fields').style.display = 'block';
+            document.getElementById('upi-fields').style.display = 'none';
+        } else {
+            document.getElementById('tab-upi').classList.add('active');
+            document.getElementById('tab-bank').classList.remove('active');
+            document.getElementById('bank-fields').style.display = 'none';
+            document.getElementById('upi-fields').style.display = 'block';
+        }
+    }
+
+    async function loadHistory() {
+        try {
+            const res = await fetch(`/api/withdraw/user/${authUser}`);
+            const data = await res.json();
+            const histRecords = document.getElementById('hist-records');
+
+            if (data.history && data.history.length > 0) {
+                histRecords.innerHTML = '';
+                data.history.forEach(item => {
+                    let badgeClass = 'badge-pending';
+                    let label = '⏳ Pending';
+                    if (item.status === 'Success') {
+                        badgeClass = 'badge-success';
+                        label = '✅ Success';
+                    } else if (item.status === 'Rejected') {
+                        badgeClass = 'badge-rejected';
+                        label = '❌ Rejected';
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.date}</td>
+                        <td style="color:#ffd700;">₹${item.amount.toFixed(2)}</td>
+                        <td>${item.type}</td>
+                        <td><span class="badge ${badgeClass}">${label}</span></td>
+                    `;
+                    histRecords.appendChild(tr);
+                });
+            } else {
+                histRecords.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#64748b; padding:12px;">No withdrawal records yet</td></tr>';
+            }
+        } catch(e){}
+    }
+    loadHistory();
+    setInterval(loadHistory, 3000);
+
+    async function submitWithdrawal() {
+        const amt = parseFloat(document.getElementById('w-amt').value);
+
+        if (!amt || isNaN(amt) || amt < 110) return alert('Minimum withdrawal amount ₹110 hai!');
+        if (amt > balance) return alert('❌ Insufficient Balance!');
+
+        let details = {};
+        if (currentMode === 'bank') {
+            const name = document.getElementById('w-name').value.trim();
+            const acc = document.getElementById('w-acc').value.trim();
+            const ifsc = document.getElementById('w-ifsc').value.trim();
+            if (!name || !acc || !ifsc) return alert('Kripya bank ki sabhi details bharein!');
+            details = { name, acc, ifsc };
+        } else {
+            const upi = document.getElementById('w-upi').value.trim();
+            if (!upi || !upi.includes('@')) return alert('Valid UPI ID dalein!');
+            details = { upi };
+        }
+
+        balance -= amt;
+        updateWallet();
+
+        const res = await fetch('/api/withdraw/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                phone: authUser,
+                amount: amt,
+                type: currentMode.toUpperCase(),
+                details: details
+            })
+        });
+        const resData = await res.json();
+
+        if (resData.success) {
+            alert(`⏳ Withdrawal Placed: ₹${amt.toFixed(2)}\nStatus: Pending (Admin verification ke baad approve hoga)`);
+            document.getElementById('w-amt').value = '';
+            loadHistory();
+        }
+    }
+</script>
+</body>
+</html>
