@@ -16,8 +16,13 @@
         .btn-admin { color: #f59e0b; text-decoration: none; font-size: 12px; font-weight: 800; border: 1px solid #f59e0b; padding: 5px 10px; border-radius: 16px; }
         .btn-deposit { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #000; font-weight: 800; padding: 6px 14px; border-radius: 20px; border: none; font-size: 13px; text-decoration: none; display: inline-block; cursor: pointer; }
         
+        /* User Bar */
+        .user-strip { background: #171724; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; border-bottom: 1px solid #232336; }
+        .user-id { color: #8a99ad; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .btn-logout { background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; font-size: 12px; }
+
         /* Golden Balance Card */
-        .wallet-card { margin: 14px; background: linear-gradient(135deg, #2c2140, #1c1829); border: 1px solid #432e65; border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .wallet-card { margin: 12px 14px 14px 14px; background: linear-gradient(135deg, #2c2140, #1c1829); border: 1px solid #432e65; border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
         .wallet-title { font-size: 12px; color: #9c9cb8; text-transform: uppercase; letter-spacing: 0.5px; }
         .wallet-amount { font-size: 28px; font-weight: 800; color: #ffd700; margin: 6px 0 14px 0; }
         .wallet-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -63,7 +68,7 @@
 <body>
 
 <div class="app-container">
-    <!-- Top Header with Admin & Deposit Links -->
+    <!-- Top Header -->
     <div class="top-header">
         <div class="logo">BIG DADDY</div>
         <div class="header-actions">
@@ -72,13 +77,22 @@
         </div>
     </div>
 
+    <!-- Active User & Logout Bar -->
+    <div class="user-strip">
+        <div class="user-id">
+            <span>👤</span>
+            <span id="user-display">+91 **********</span>
+        </div>
+        <button class="btn-logout" onclick="logoutUser()">LOGOUT</button>
+    </div>
+
     <!-- Real Synchronized Wallet -->
     <div class="wallet-card">
         <div class="wallet-title">Total Balance</div>
         <div class="wallet-amount" id="lobby-balance">₹ 1,000.00</div>
         <div class="wallet-buttons">
             <a href="/deposit.html" class="btn-w-action btn-pay">+ Add Cash</a>
-            <button class="btn-w-action btn-withdraw" onclick="alert('Minimum withdrawal is ₹110.00')">Withdraw</button>
+            <button class="btn-w-action btn-withdraw" onclick="alert('Withdrawal section next step me add hoga!')">Withdraw</button>
         </div>
     </div>
 
@@ -162,11 +176,11 @@
             <span class="nav-icon">🏠</span>
             <span>Home</span>
         </div>
-        <div class="nav-item" onclick="alert('Activity Bonus: Check back daily!')">
+        <div class="nav-item" onclick="alert('Activity Bonus: Daily Reward ₹50 Claimed!')">
             <span class="nav-icon">🎁</span>
             <span>Activity</span>
         </div>
-        <div class="nav-item" onclick="alert('Promotion Commission: 0.6% on every referral!')">
+        <div class="nav-item" onclick="alert('Invite link copied! Earn 0.6% commission.')">
             <span class="nav-icon">👥</span>
             <span>Promotion</span>
         </div>
@@ -174,7 +188,7 @@
             <span class="nav-icon">💳</span>
             <span>Wallet</span>
         </div>
-        <div class="nav-item" onclick="alert('Account ID: BDG98342')">
+        <div class="nav-item" onclick="logoutUser()">
             <span class="nav-icon">👤</span>
             <span>Account</span>
         </div>
@@ -182,7 +196,23 @@
 </div>
 
 <script>
-    // Universal Wallet Synchronization
+    // 1. Session Auth Protection
+    const authUser = localStorage.getItem('bdg_auth_user');
+    if (!authUser) {
+        window.location.href = '/login.html';
+    } else {
+        const masked = authUser.length === 10 ? `${authUser.slice(0, 3)}****${authUser.slice(7)}` : authUser;
+        document.getElementById('user-display').innerText = `+91 ${masked}`;
+    }
+
+    function logoutUser() {
+        if (confirm("Kya aap Logout karna chahte hain?")) {
+            localStorage.removeItem('bdg_auth_user');
+            window.location.href = '/login.html';
+        }
+    }
+
+    // 2. Universal Wallet Synchronization
     let balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
     const lobbyBalance = document.getElementById('lobby-balance');
 
@@ -192,10 +222,9 @@
     }
     syncWallet();
 
-    // Auto-update balance if coming back from deposit or game tab
     window.addEventListener('focus', syncWallet);
 
-    // Live Winner Ticker Loop
+    // 3. Live Winner Ticker
     const dummyWinners = [
         "User 91***34 won ₹1,200 in Wingo!",
         "User 78***11 won ₹8,400 in Aviator!",
