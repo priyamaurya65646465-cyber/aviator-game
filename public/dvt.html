@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dragon vs Tiger - Big Daddy</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background: #080a10; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 440px; background: #0f131d; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+
+        /* Header */
+        .header { background: #161b27; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #232c3f; }
+        .back-btn { color: #f59e0b; text-decoration: none; font-size: 13px; font-weight: 700; }
+        .wallet-pill { background: #1c2333; border: 1px solid #2d3851; padding: 6px 14px; border-radius: 20px; font-weight: 800; color: #10b981; font-size: 14px; }
+
+        /* Card Table Area */
+        .table-area { background: radial-gradient(circle, #0e3d26 0%, #061c11 100%); margin: 12px; border-radius: 16px; padding: 20px 10px; border: 3px solid #b8860b; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 4px 15px rgba(0,0,0,0.5); position: relative; display: flex; flex-direction: column; align-items: center; }
+        
+        .timer-badge { background: rgba(0,0,0,0.7); border: 1px solid #f59e0b; padding: 4px 16px; border-radius: 20px; font-size: 13px; font-weight: 800; color: #f59e0b; margin-bottom: 15px; }
+        
+        .versus-arena { display: flex; justify-content: space-around; width: 100%; align-items: center; }
+        .side-box { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .side-title { font-size: 15px; font-weight: 900; letter-spacing: 1px; }
+        .title-dragon { color: #ef4444; }
+        .title-tiger { color: #f59e0b; }
+
+        /* Playing Card 3D Flip */
+        .card { width: 85px; height: 120px; perspective: 600px; }
+        .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 8px; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        
+        .card-front { background: repeating-linear-gradient(45deg, #1e293b, #1e293b 8px, #0f172a 8px, #0f172a 16px); border: 2px solid #e2e8f0; }
+        .card-back { background: #fff; color: #000; transform: rotateY(180deg); border: 2px solid #ffd700; font-size: 26px; font-weight: 900; }
+        .card-back.red { color: #ef4444; }
+
+        .vs-icon { font-size: 22px; font-weight: 900; color: #fbbf24; text-shadow: 0 0 10px rgba(251,191,36,0.6); }
+
+        .result-banner { margin-top: 14px; font-size: 18px; font-weight: 900; color: #fff; min-height: 24px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Bet Selection Zones */
+        .bet-zones { display: grid; grid-template-columns: 1fr 0.7fr 1fr; gap: 8px; margin: 12px; }
+        .zone { background: #161b27; border-radius: 12px; padding: 16px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #232c3f; transition: transform 0.05s ease; position: relative; }
+        .zone:active { transform: scale(0.97); }
+        .zone.dragon { border-color: #ef4444; background: linear-gradient(180deg, rgba(239,68,68,0.1), #161b27); }
+        .zone.tie { border-color: #10b981; background: linear-gradient(180deg, rgba(16,185,129,0.1), #161b27); }
+        .zone.tiger { border-color: #f59e0b; background: linear-gradient(180deg, rgba(245,158,11,0.1), #161b27); }
+        
+        .zone-name { font-size: 15px; font-weight: 900; text-transform: uppercase; }
+        .zone-odds { font-size: 11px; color: #8a99ad; margin-top: 2px; font-weight: 700; }
+        .my-bet-tag { position: absolute; top: -8px; background: #ffd700; color: #000; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 10px; display: none; }
+
+        /* Chip Controls */
+        .chip-panel { background: #131722; padding: 14px; margin-top: auto; border-top: 1px solid #1f2638; display: flex; flex-direction: column; gap: 10px; }
+        .chips-row { display: flex; justify-content: space-around; }
+        .bet-chip { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; cursor: pointer; border: 2px dashed rgba(255,255,255,0.4); box-shadow: 0 4px 6px rgba(0,0,0,0.4); }
+        .bet-chip.active { border: 3px solid #fff; transform: scale(1.1); }
+        .chip-10 { background: #3b82f6; }
+        .chip-50 { background: #10b981; }
+        .chip-100 { background: #ef4444; }
+        .chip-500 { background: #f59e0b; color: #000; }
+
+        /* History Strip */
+        .hist-strip { display: flex; gap: 6px; overflow-x: auto; padding: 0 12px 12px 12px; scrollbar-width: none; }
+        .hist-strip::-webkit-scrollbar { display: none; }
+        .hist-bubble { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #fff; flex-shrink: 0; }
+        .h-d { background: #ef4444; }
+        .h-t { background: #f59e0b; color: #000; }
+        .h-tie { background: #10b981; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <a href="/" class="back-btn">◀ LOBBY</a>
+        <div class="wallet-pill" id="wallet-text">₹ 1,000.00</div>
+    </div>
+
+    <!-- Live Card Table -->
+    <div class="table-area">
+        <div class="timer-badge" id="timer-text">BETTING TIME: 10s</div>
+
+        <div class="versus-arena">
+            <div class="side-box">
+                <span class="side-title title-dragon">DRAGON</span>
+                <div class="card" id="card-dragon">
+                    <div class="card-inner">
+                        <div class="card-front"></div>
+                        <div class="card-back" id="val-dragon">?</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vs-icon">VS</div>
+
+            <div class="side-box">
+                <span class="side-title title-tiger">TIGER</span>
+                <div class="card" id="card-tiger">
+                    <div class="card-inner">
+                        <div class="card-front"></div>
+                        <div class="card-back" id="val-tiger">?</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-banner" id="banner-text">Place Your Bet</div>
+    </div>
+
+    <!-- History Bar -->
+    <div class="hist-strip" id="history-box"></div>
+
+    <!-- Betting Zones -->
+    <div class="bet-zones">
+        <div class="zone dragon" onclick="placeBet('DRAGON', 2.0)">
+            <span class="my-bet-tag" id="tag-dragon">₹0</span>
+            <span class="zone-name" style="color:#ef4444;">Dragon</span>
+            <span class="zone-odds">1:2</span>
+        </div>
+        <div class="zone tie" onclick="placeBet('TIE', 9.0)">
+            <span class="my-bet-tag" id="tag-tie">₹0</span>
+            <span class="zone-name" style="color:#10b981;">Tie</span>
+            <span class="zone-odds">1:9</span>
+        </div>
+        <div class="zone tiger" onclick="placeBet('TIGER', 2.0)">
+            <span class="my-bet-tag" id="tag-tiger">₹0</span>
+            <span class="zone-name" style="color:#f59e0b;">Tiger</span>
+            <span class="zone-odds">1:2</span>
+        </div>
+    </div>
+
+    <!-- Chip Selector -->
+    <div class="chip-panel">
+        <div style="font-size:12px; color:#8a99ad; text-align:center; font-weight:700;">SELECT CHIP AMOUNT</div>
+        <div class="chips-row">
+            <div class="bet-chip chip-10 active" onclick="setChip(this, 10)">₹10</div>
+            <div class="bet-chip chip-50" onclick="setChip(this, 50)">₹50</div>
+            <div class="bet-chip chip-100" onclick="setChip(this, 100)">₹100</div>
+            <div class="bet-chip chip-500" onclick="setChip(this, 500)">₹500</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Audio FX
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq, duration = 0.1) {
+        try {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e){}
+    }
+
+    // Shared Wallet
+    let balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
+    const walletText = document.getElementById('wallet-text');
+    function updateWallet() {
+        walletText.innerText = `₹ ${balance.toFixed(2)}`;
+        localStorage.setItem('bdg_balance', balance);
+    }
+    updateWallet();
+
+    // Game Variables
+    let selectedChip = 10;
+    let bets = { DRAGON: 0, TIE: 0, TIGER: 0 };
+    let canBet = true;
+    let countdown = 10;
+
+    const cardNames = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    const suits = ['♠', '♥', '♣', '♦'];
+
+    function setChip(el, amt) {
+        document.querySelectorAll('.bet-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        selectedChip = amt;
+        playBeep(450);
+    }
+
+    function placeBet(type, odds) {
+        if (!canBet) return alert('Betting is locked for this round!');
+        if (selectedChip > balance) return alert('Low Balance!');
+
+        balance -= selectedChip;
+        updateWallet();
+        bets[type] += selectedChip;
+
+        const tag = document.getElementById(`tag-${type.toLowerCase()}`);
+        tag.style.display = 'block';
+        tag.innerText = `₹${bets[type]}`;
+        playBeep(600);
+    }
+
+    // Game Loop (Every 15 Seconds)
+    function runGameLoop() {
+        countdown = 10;
+        canBet = true;
+        document.getElementById('card-dragon').classList.remove('flipped');
+        document.getElementById('card-tiger').classList.remove('flipped');
+        document.getElementById('banner-text').innerText = 'Place Your Bet';
+        document.getElementById('banner-text').style.color = '#fff';
+
+        const timer = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                document.getElementById('timer-text').innerText = `BETTING TIME: ${countdown}s`;
+                if (countdown <= 3) playBeep(300, 0.05);
+            } else {
+                clearInterval(timer);
+                canBet = false;
+                document.getElementById('timer-text').innerText = `SHOWDOWN!`;
+                playShowdown();
+            }
+        }, 1000);
+    }
+
+    function playShowdown() {
+        // Draw Cards (0 to 12)
+        const dVal = Math.floor(Math.random() * 13);
+        const tVal = Math.floor(Math.random() * 13);
+        const dSuit = suits[Math.floor(Math.random() * 4)];
+        const tSuit = suits[Math.floor(Math.random() * 4)];
+
+        // Flip Dragon Card
+        setTimeout(() => {
+            const cardD = document.getElementById('card-dragon');
+            const valD = document.getElementById('val-dragon');
+            valD.innerText = `${cardNames[dVal]} ${dSuit}`;
+            valD.className = `card-back ${['♥','♦'].includes(dSuit) ? 'red' : ''}`;
+            cardD.classList.add('flipped');
+            playBeep(520, 0.15);
+        }, 600);
+
+        // Flip Tiger Card
+        setTimeout(() => {
+            const cardT = document.getElementById('card-tiger');
+            const valT = document.getElementById('val-tiger');
+            valT.innerText = `${cardNames[tVal]} ${tSuit}`;
+            valT.className = `card-back ${['♥','♦'].includes(tSuit) ? 'red' : ''}`;
+            cardT.classList.add('flipped');
+            playBeep(520, 0.15);
+        }, 1400);
+
+        // Announce Winner & Settle Bets
+        setTimeout(() => {
+            let winner = '';
+            const banner = document.getElementById('banner-text');
+
+            if (dVal > tVal) {
+                winner = 'DRAGON';
+                banner.innerText = '🐉 DRAGON WINS!';
+                banner.style.color = '#ef4444';
+            } else if (tVal > dVal) {
+                winner = 'TIGER';
+                banner.innerText = '🐅 TIGER WINS!';
+                banner.style.color = '#f59e0b';
+            } else {
+                winner = 'TIE';
+                banner.innerText = '🤝 TIE ROUND!';
+                banner.style.color = '#10b981';
+            }
+
+            addHistory(winner);
+
+            // Calculate Win
+            let winAmt = 0;
+            if (winner === 'DRAGON' && bets.DRAGON > 0) winAmt += bets.DRAGON * 2.0;
+            if (winner === 'TIGER' && bets.TIGER > 0) winAmt += bets.TIGER * 2.0;
+            if (winner === 'TIE' && bets.TIE > 0) winAmt += bets.TIE * 9.0;
+
+            if (winAmt > 0) {
+                balance += winAmt;
+                updateWallet();
+                playBeep(880, 0.35);
+                alert(`🎉 YOU WON ₹${winAmt.toFixed(2)} on ${winner}!`);
+            }
+
+            // Reset tags
+            document.querySelectorAll('.my-bet-tag').forEach(t => t.style.display = 'none');
+            bets = { DRAGON: 0, TIE: 0, TIGER: 0 };
+
+            // Start Next Round after 4 seconds
+            setTimeout(runGameLoop, 4000);
+        }, 2200);
+    }
+
+    function addHistory(winner) {
+        const box = document.getElementById('history-box');
+        const bubble = document.createElement('div');
+        bubble.className = `hist-bubble ${winner === 'DRAGON' ? 'h-d' : winner === 'TIGER' ? 'h-t' : 'h-tie'}`;
+        bubble.innerText = winner === 'DRAGON' ? 'D' : winner === 'TIGER' ? 'T' : 'Tie';
+        box.prepend(bubble);
+        if (box.children.length > 12) box.removeChild(box.lastChild);
+    }
+
+    // Pre-populate some history
+    ['DRAGON', 'TIGER', 'DRAGON', 'TIE', 'TIGER'].forEach(w => addHistory(w));
+
+    // Start Engine
+    runGameLoop();
+</script>
+</body>
+</html>
