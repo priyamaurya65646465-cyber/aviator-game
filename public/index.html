@@ -26,9 +26,9 @@
         .wallet-title { font-size: 12px; color: #9c9cb8; text-transform: uppercase; letter-spacing: 0.5px; }
         .wallet-amount { font-size: 28px; font-weight: 800; color: #ffd700; margin: 6px 0 14px 0; }
         .wallet-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-w-action { padding: 9px 0; border-radius: 8px; font-weight: 600; font-size: 13px; border: none; cursor: pointer; text-align: center; text-decoration: none; }
+        .btn-w-action { padding: 10px 0; border-radius: 8px; font-weight: 700; font-size: 13px; border: none; cursor: pointer; text-align: center; text-decoration: none; display: block; }
         .btn-pay { background: #00c988; color: #fff; }
-        .btn-withdraw { background: #33334d; color: #ddd; }
+        .btn-withdraw { background: #33334d; color: #ffd700; border: 1px solid #4d4d73; }
         
         /* Winning Ticker Banner */
         .notice-bar { margin: 0 14px 14px 14px; background: #1c1c2b; padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #c4c4dc; }
@@ -92,7 +92,7 @@
         <div class="wallet-amount" id="lobby-balance">₹ 1,000.00</div>
         <div class="wallet-buttons">
             <a href="/deposit.html" class="btn-w-action btn-pay">+ Add Cash</a>
-            <button class="btn-w-action btn-withdraw" onclick="alert('Withdrawal section next step me add hoga!')">Withdraw</button>
+            <a href="/withdraw.html" class="btn-w-action btn-withdraw">Withdraw</a>
         </div>
     </div>
 
@@ -184,7 +184,7 @@
             <span class="nav-icon">👥</span>
             <span>Promotion</span>
         </div>
-        <div class="nav-item" onclick="window.location.href='/deposit.html'">
+        <div class="nav-item" onclick="window.location.href='/withdraw.html'">
             <span class="nav-icon">💳</span>
             <span>Wallet</span>
         </div>
