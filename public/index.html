@@ -13,7 +13,8 @@
         .top-header { background: #222232; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2d42; position: sticky; top: 0; z-index: 100; }
         .logo { font-size: 20px; font-weight: 900; background: linear-gradient(135deg, #f5d061, #e6a119); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; letter-spacing: 1px; }
         .header-actions { display: flex; gap: 8px; align-items: center; }
-        .btn-deposit { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #000; font-weight: 700; padding: 6px 14px; border-radius: 20px; border: none; font-size: 13px; cursor: pointer; }
+        .btn-admin { color: #f59e0b; text-decoration: none; font-size: 12px; font-weight: 800; border: 1px solid #f59e0b; padding: 5px 10px; border-radius: 16px; }
+        .btn-deposit { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #000; font-weight: 800; padding: 6px 14px; border-radius: 20px; border: none; font-size: 13px; text-decoration: none; display: inline-block; cursor: pointer; }
         
         /* Golden Balance Card */
         .wallet-card { margin: 14px; background: linear-gradient(135deg, #2c2140, #1c1829); border: 1px solid #432e65; border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
@@ -62,10 +63,12 @@
 <body>
 
 <div class="app-container">
+    <!-- Top Header with Admin & Deposit Links -->
     <div class="top-header">
         <div class="logo">BIG DADDY</div>
         <div class="header-actions">
-            <button class="btn-deposit" onclick="alert('Recharge options opening...')">Deposit</button>
+            <a href="/admin" class="btn-admin">⚙️ Admin</a>
+            <a href="/deposit.html" class="btn-deposit">Deposit</a>
         </div>
     </div>
 
@@ -74,7 +77,7 @@
         <div class="wallet-title">Total Balance</div>
         <div class="wallet-amount" id="lobby-balance">₹ 1,000.00</div>
         <div class="wallet-buttons">
-            <button class="btn-w-action btn-pay" onclick="quickAddCash()">+ Add Cash</button>
+            <a href="/deposit.html" class="btn-w-action btn-pay">+ Add Cash</a>
             <button class="btn-w-action btn-withdraw" onclick="alert('Minimum withdrawal is ₹110.00')">Withdraw</button>
         </div>
     </div>
@@ -159,19 +162,19 @@
             <span class="nav-icon">🏠</span>
             <span>Home</span>
         </div>
-        <div class="nav-item" onclick="alert('Activity Bonus')">
+        <div class="nav-item" onclick="alert('Activity Bonus: Check back daily!')">
             <span class="nav-icon">🎁</span>
             <span>Activity</span>
         </div>
-        <div class="nav-item" onclick="alert('Promotion Commission: 0.6%')">
+        <div class="nav-item" onclick="alert('Promotion Commission: 0.6% on every referral!')">
             <span class="nav-icon">👥</span>
             <span>Promotion</span>
         </div>
-        <div class="nav-item" onclick="alert('Wallet Management')">
+        <div class="nav-item" onclick="window.location.href='/deposit.html'">
             <span class="nav-icon">💳</span>
             <span>Wallet</span>
         </div>
-        <div class="nav-item" onclick="alert('Account Profile')">
+        <div class="nav-item" onclick="alert('Account ID: BDG98342')">
             <span class="nav-icon">👤</span>
             <span>Account</span>
         </div>
@@ -179,7 +182,7 @@
 </div>
 
 <script>
-    // Wallet Sync with all 4 games
+    // Universal Wallet Synchronization
     let balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
     const lobbyBalance = document.getElementById('lobby-balance');
 
@@ -189,16 +192,8 @@
     }
     syncWallet();
 
-    // Quick Test Deposit
-    function quickAddCash() {
-        let add = prompt("Enter amount to add (Test Demo):", "500");
-        if(add && !isNaN(add) && parseFloat(add) > 0) {
-            balance += parseFloat(add);
-            localStorage.setItem('bdg_balance', balance);
-            syncWallet();
-            alert(`₹${parseFloat(add).toFixed(2)} added to wallet successfully!`);
-        }
-    }
+    // Auto-update balance if coming back from deposit or game tab
+    window.addEventListener('focus', syncWallet);
 
     // Live Winner Ticker Loop
     const dummyWinners = [
