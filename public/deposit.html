@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Deposit Cash - Big Daddy</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background: #0c0e17; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 440px; background: #121622; min-height: 100vh; padding-bottom: 30px; display: flex; flex-direction: column; }
+
+        /* Header */
+        .header { background: #181d2c; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #242c42; }
+        .back-btn { color: #f59e0b; text-decoration: none; font-size: 13px; font-weight: 700; }
+        .title { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
+
+        /* Current Balance Strip */
+        .bal-strip { background: linear-gradient(135deg, #221c38, #181528); margin: 12px; padding: 14px; border-radius: 12px; border: 1px solid #3d2f5e; display: flex; justify-content: space-between; align-items: center; }
+        .bal-label { font-size: 12px; color: #a49fc2; font-weight: 600; }
+        .bal-val { font-size: 18px; font-weight: 900; color: #ffd700; }
+
+        /* Amount Selection */
+        .section { margin: 0 12px 14px 12px; }
+        .sec-title { font-size: 13px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; }
+        
+        .chips-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+        .chip { background: #191f30; border: 1px solid #28334d; color: #cbd5e1; padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 800; text-align: center; cursor: pointer; }
+        .chip.active { background: linear-gradient(135deg, #d4af37, #b8860b); color: #000; border-color: #ffd700; }
+
+        .amt-input-box { background: #0b0e16; border: 1px solid #2c3854; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 8px; }
+        .rupee-sym { font-size: 18px; font-weight: 900; color: #f59e0b; }
+        .amt-input { background: transparent; border: none; color: #fff; font-size: 18px; font-weight: 800; width: 100%; outline: none; }
+
+        /* Payment Gateway Card */
+        .pay-card { background: #161c2a; border-radius: 14px; border: 1px solid #263148; padding: 16px; margin: 0 12px 14px 12px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        
+        .qr-wrapper { background: #fff; padding: 10px; border-radius: 12px; margin: 12px 0; width: 180px; height: 180px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .qr-img { width: 100%; height: 100%; object-fit: contain; }
+
+        .upi-copy-row { background: #0b0e14; border: 1px dashed #2f3d5c; border-radius: 8px; padding: 8px 12px; width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .upi-text { font-size: 13px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px; }
+        .btn-copy { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 800; cursor: pointer; }
+
+        /* UTR Form */
+        .utr-box { width: 100%; margin-top: 10px; text-align: left; }
+        .utr-label { font-size: 11px; font-weight: 700; color: #8a99ad; margin-bottom: 4px; display: block; }
+        .utr-input { width: 100%; background: #0b0e14; border: 1px solid #2c3854; border-radius: 8px; color: #fff; padding: 10px 12px; font-size: 14px; font-weight: 700; outline: none; letter-spacing: 1px; }
+
+        .btn-submit { width: calc(100% - 24px); margin: 0 12px; padding: 14px; border-radius: 10px; border: none; font-size: 15px; font-weight: 900; background: linear-gradient(135deg, #10b981, #059669); color: #fff; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
+        .btn-submit:active { transform: scale(0.98); }
+
+        .tips { margin: 14px 16px; font-size: 11px; color: #64748b; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <a href="/" class="back-btn">◀ LOBBY</a>
+        <div class="title">RECHARGE WALLET</div>
+        <div style="width: 40px;"></div>
+    </div>
+
+    <!-- Balance display -->
+    <div class="bal-strip">
+        <span class="bal-label">Current Balance</span>
+        <span class="bal-val" id="wallet-text">₹ 1,000.00</span>
+    </div>
+
+    <!-- Select Amount -->
+    <div class="section">
+        <div class="sec-title">Select Deposit Amount</div>
+        <div class="chips-grid">
+            <div class="chip" onclick="selectAmt(this, 100)">₹100</div>
+            <div class="chip active" onclick="selectAmt(this, 500)">₹500</div>
+            <div class="chip" onclick="selectAmt(this, 1000)">₹1,000</div>
+            <div class="chip" onclick="selectAmt(this, 2000)">₹2,000</div>
+            <div class="chip" onclick="selectAmt(this, 5000)">₹5,000</div>
+            <div class="chip" onclick="selectAmt(this, 10000)">₹10,000</div>
+        </div>
+        <div class="amt-input-box">
+            <span class="rupee-sym">₹</span>
+            <input type="number" id="deposit-amt" class="amt-input" value="500" min="100" step="50" oninput="onCustomAmtChange()">
+        </div>
+    </div>
+
+    <!-- QR & UPI Gateway -->
+    <div class="pay-card">
+        <div style="font-size:12px; color:#10b981; font-weight:800; display:flex; align-items:center; gap:6px;">
+            <span>🟢</span> FAST UPI AUTOPAY (24x7)
+        </div>
+
+        <!-- Dynamic QR Code -->
+        <div class="qr-wrapper">
+            <img id="qr-image" class="qr-img" src="" alt="Scan & Pay UPI QR">
+        </div>
+        <p style="font-size:11px; color:#94a3b8; margin-bottom:10px;">PayTM / PhonePe / GPay / Any UPI App se scan karein</p>
+
+        <!-- UPI ID Copy -->
+        <div class="upi-copy-row">
+            <span class="upi-text" id="upi-val">bigdaddy.pay@upi</span>
+            <button class="btn-copy" onclick="copyUPI()">COPY</button>
+        </div>
+
+        <!-- UTR Ref Input -->
+        <div class="utr-box">
+            <label class="utr-label">12-Digit UTR / Ref Number (Payment ke baad dalein):</label>
+            <input type="text" id="utr-input" class="utr-input" placeholder="e.g. 423985718291" maxlength="12">
+        </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitDeposit()">CONFIRM RECHARGE</button>
+
+    <div class="tips">
+        📌 <b>Important:</b> Payment karne ke baad UPI App se 12-digit UTR / Reference No. copy karke yahan daalein. Paisa instant 5 seconds mein aapke wallet mein add ho jayega.
+    </div>
+</div>
+
+<script>
+    // Shared Wallet Balance
+    let balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
+    const walletText = document.getElementById('wallet-text');
+    function updateWallet() {
+        walletText.innerText = `₹ ${balance.toFixed(2)}`;
+        localStorage.setItem('bdg_balance', balance);
+    }
+    updateWallet();
+
+    const upiId = "bigdaddy.pay@upi"; // Aap apni UPI ID yahan change kar sakte hain
+    const amtInput = document.getElementById('deposit-amt');
+    const qrImage = document.getElementById('qr-image');
+
+    // Dynamic QR update generator
+    function updateQR(amt) {
+        // Standard UPI Intent URL
+        const upiIntent = `upi://pay?pa=${upiId}&pn=BigDaddyOfficial&am=${amt}&cu=INR`;
+        // Public QR Generator API
+        qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiIntent)}`;
+    }
+    updateQR(500);
+
+    function selectAmt(el, val) {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        amtInput.value = val;
+        updateQR(val);
+    }
+
+    function onCustomAmtChange() {
+        let val = parseFloat(amtInput.value) || 0;
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        if (val > 0) updateQR(val);
+    }
+
+    function copyUPI() {
+        navigator.clipboard.writeText(upiId);
+        alert(`UPI ID Copied: ${upiId}`);
+    }
+
+    function submitDeposit() {
+        const amt = parseFloat(amtInput.value);
+        const utr = document.getElementById('utr-input').value.trim();
+
+        if (!amt || amt < 100) return alert('Minimum deposit ₹100 hai!');
+        if (!utr || utr.length < 8) return alert('Kripya valid 12-digit UTR / Reference number dalein!');
+
+        // Instant simulated verification
+        const btn = document.querySelector('.btn-submit');
+        btn.innerText = "VERIFYING PAYMENT...";
+        btn.disabled = true;
+
+        setTimeout(() => {
+            balance += amt;
+            updateWallet();
+            alert(`🎉 PAYMENT SUCCESSFUL!\n₹${amt.toFixed(2)} wallet mein add ho chuka hai.`);
+            window.location.href = "/";
+        }, 1500);
+    }
+</script>
+</body>
+</html>
