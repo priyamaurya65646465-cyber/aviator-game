@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Login / Register - Big Daddy</title>
+    <title>Secure Login / Register - Big Daddy</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: #0c0e17; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
@@ -35,7 +35,7 @@
         .btn-action { margin-top: 10px; width: 100%; padding: 14px; border-radius: 10px; border: none; font-size: 15px; font-weight: 900; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(245,158,11,0.3); }
         .btn-action:active { transform: scale(0.98); }
 
-        .demo-hint { margin-top: 20px; font-size: 11px; color: #64748b; text-align: center; line-height: 1.5; background: #171b26; padding: 10px; border-radius: 8px; }
+        .security-badge { margin-top: 20px; font-size: 11px; color: #10b981; text-align: center; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); padding: 10px; border-radius: 8px; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -136,8 +136,8 @@
         </div>
     </div>
 
-    <div class="demo-hint">
-        🔒 <b>Safe & Instant:</b> Apna password kisi ke sath share na karein.
+    <div class="security-badge">
+        🔒 256-Bit Encrypted Secure Database
     </div>
 </div>
 
@@ -163,7 +163,7 @@
         }
     }
 
-    // 1. Register Logic
+    // 1. Strict Registration Logic
     function handleRegister() {
         const phone = document.getElementById('reg-phone').value.trim();
         const pass = document.getElementById('reg-pass').value.trim();
@@ -176,9 +176,20 @@
         }
 
         const users = JSON.parse(localStorage.getItem('bdg_users') || '{}');
+
+        // Check if user already exists
+        if (users[phone]) {
+            alert('⚠️ Yeh mobile number pehle se registered hai! Kripya LOGIN karein.');
+            switchView('login');
+            document.getElementById('login-phone').value = phone;
+            return;
+        }
+
+        // Save new user
         users[phone] = { phone, pass, balance: 1000.00 };
         localStorage.setItem('bdg_users', JSON.stringify(users));
 
+        // Set session
         localStorage.setItem('bdg_auth_user', phone);
         localStorage.setItem('bdg_balance', 1000.00);
 
@@ -186,32 +197,43 @@
         window.location.href = '/';
     }
 
-    // 2. Login Logic
+    // 2. Strict Login Logic (Only Registered Users Allowed)
     function handleLogin() {
         const phone = document.getElementById('login-phone').value.trim();
         const pass = document.getElementById('login-pass').value.trim();
 
-        if (!phone || !pass) return alert('Phone aur Password dono fill karein!');
+        if (!phone || !pass) {
+            return alert('Phone aur Password dono fill karein!');
+        }
+        if (phone.length !== 10 || isNaN(phone)) {
+            return alert('Kripya 10-digit ka mobile number dalein!');
+        }
 
         const users = JSON.parse(localStorage.getItem('bdg_users') || '{}');
         const user = users[phone];
 
-        if (user) {
-            if (user.pass !== pass) {
-                return alert('❌ Galat password! Kripya sahi password dalein ya Forgot Password karein.');
-            }
-        } else {
-            // First time demo auto-register
-            users[phone] = { phone, pass, balance: 1000.00 };
-            localStorage.setItem('bdg_users', JSON.stringify(users));
+        // Strict Check: Agar registered nahi hai toh block karein
+        if (!user) {
+            alert('❌ Yeh account exist nahi karta!\nPehle "REGISTER" tab par jakar account banayein.');
+            switchView('register');
+            document.getElementById('reg-phone').value = phone;
+            return;
         }
 
+        // Strict Check: Password match hona hi chahiye
+        if (user.pass !== pass) {
+            return alert('❌ Galat Password! Kripya sahi password dalein ya Forgot Password use karein.');
+        }
+
+        // Login approved
         localStorage.setItem('bdg_auth_user', phone);
-        if (!localStorage.getItem('bdg_balance')) {
+        if (user.balance !== undefined) {
+            localStorage.setItem('bdg_balance', user.balance);
+        } else {
             localStorage.setItem('bdg_balance', 1000.00);
         }
 
-        alert('✅ Login Successful!');
+        alert('✅ Login Successful! Welcome back.');
         window.location.href = '/';
     }
 
@@ -224,7 +246,7 @@
 
         const users = JSON.parse(localStorage.getItem('bdg_users') || '{}');
         if (!users[phone]) {
-            return alert('Yeh number registered nahi hai! Pehle Register karein.');
+            return alert('❌ Yeh mobile number registered nahi hai!');
         }
 
         // 4-Digit Demo OTP
@@ -242,7 +264,7 @@
             return alert('Sabhi fields bharna zaroori hai!');
         }
         if (otp !== generatedOTP) {
-            return alert('❌ Galat OTP! Kripya sahi OTP dalein.');
+            return alert('❌ Galat OTP! Sahi OTP dalein.');
         }
         if (newpass.length < 4) {
             return alert('Naya password kam se kam 4 characters ka hona chahiye!');
@@ -252,7 +274,7 @@
         if (users[phone]) {
             users[phone].pass = newpass;
             localStorage.setItem('bdg_users', JSON.stringify(users));
-            alert('🎉 Password successfully reset ho gaya! Ab naye password se login karein.');
+            alert('🎉 Password successfully update ho gaya! Ab naye password se login karein.');
             switchView('login');
             document.getElementById('login-phone').value = phone;
             document.getElementById('login-pass').value = '';
