@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Win Go 1Min - Big Daddy Style</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: #1a1a24; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 440px; background: #12121a; min-height: 100vh; padding-bottom: 70px; position: relative; }
+        .header { background: #222232; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2d42; }
+        .wallet-box { background: linear-gradient(135deg, #d4af37, #aa7c11); padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #000; }
+        .game-banner { margin: 15px; background: linear-gradient(135deg, #2b1f3d, #1f1b2e); border: 1px solid #3d2b56; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .period-info span { color: #8e8ea8; font-size: 12px; }
+        .period-info h3 { font-size: 18px; color: #f1c40f; margin-top: 4px; }
+        .countdown-box { text-align: right; }
+        .countdown-box span { font-size: 12px; color: #8e8ea8; }
+        .timer-display { font-size: 26px; font-weight: 800; color: #00ffcc; letter-spacing: 2px; }
+        .color-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 15px; }
+        .btn-action { border: none; padding: 12px 0; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; color: white; transition: 0.2s; }
+        .btn-green { background: #00c988; box-shadow: 0 4px 10px rgba(0,201,136,0.3); }
+        .btn-violet { background: #9b51e0; box-shadow: 0 4px 10px rgba(155,81,224,0.3); }
+        .btn-red { background: #ff4757; box-shadow: 0 4px 10px rgba(255,71,87,0.3); }
+        .numbers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 15px; background: #1c1c2b; padding: 15px; border-radius: 12px; }
+        .num-ball { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: none; color: #fff; }
+        .ball-0 { background: linear-gradient(135deg, #ff4757 50%, #9b51e0 50%); }
+        .ball-5 { background: linear-gradient(135deg, #00c988 50%, #9b51e0 50%); }
+        .ball-green { background: #00c988; }
+        .ball-red { background: #ff4757; }
+        .big-small-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px; }
+        .btn-big { background: #ff9f43; }
+        .btn-small { background: #54a0ff; }
+        .lock-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 100; border-radius: 12px; }
+        .lock-count { font-size: 70px; font-weight: 900; color: #ff4757; }
+        .history-card { margin: 15px; background: #1c1c2b; border-radius: 12px; padding: 15px; }
+        .history-card h4 { font-size: 14px; margin-bottom: 10px; color: #8e8ea8; }
+        .history-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #27273d; font-size: 13px; }
+        .badge { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <h3 style="color:#d4af37;">WINGO 1Min</h3>
+        <div class="wallet-box" id="wallet-balance">₹ 1000.00</div>
+    </div>
+
+    <div class="game-banner" style="position: relative;">
+        <div class="period-info">
+            <span>Period</span>
+            <h3 id="current-period">Loading...</h3>
+        </div>
+        <div class="countdown-box">
+            <span>Time Remaining</span>
+            <div class="timer-display" id="timer-display">00:60</div>
+        </div>
+        <div class="lock-overlay" id="lock-overlay">
+            <div class="lock-count" id="lock-seconds">10</div>
+            <p style="color:#fff; font-size:14px; margin-top:10px;">Betting Closed</p>
+        </div>
+    </div>
+
+    <div class="color-actions">
+        <button class="btn-action btn-green" onclick="placeBet('color', 'green')">Green</button>
+        <button class="btn-action btn-violet" onclick="placeBet('color', 'violet')">Violet</button>
+        <button class="btn-action btn-red" onclick="placeBet('color', 'red')">Red</button>
+    </div>
+
+    <div class="numbers-grid">
+        <button class="num-ball ball-0" onclick="placeBet('number', 0)">0</button>
+        <button class="num-ball ball-green" onclick="placeBet('number', 1)">1</button>
+        <button class="num-ball ball-red" onclick="placeBet('number', 2)">2</button>
+        <button class="num-ball ball-green" onclick="placeBet('number', 3)">3</button>
+        <button class="num-ball ball-red" onclick="placeBet('number', 4)">4</button>
+        <button class="num-ball ball-5" onclick="placeBet('number', 5)">5</button>
+        <button class="num-ball ball-red" onclick="placeBet('number', 6)">6</button>
+        <button class="num-ball ball-green" onclick="placeBet('number', 7)">7</button>
+        <button class="num-ball ball-red" onclick="placeBet('number', 8)">8</button>
+        <button class="num-ball ball-green" onclick="placeBet('number', 9)">9</button>
+    </div>
+
+    <div class="big-small-actions">
+        <button class="btn-action btn-big" onclick="placeBet('bigSmall', 'big')">Big (5-9)</button>
+        <button class="btn-action btn-small" onclick="placeBet('bigSmall', 'small')">Small (0-4)</button>
+    </div>
+
+    <div class="history-card">
+        <h4>Game History</h4>
+        <div id="history-list"></div>
+    </div>
+</div>
+
+<script>
+    const socket = io();
+    let balance = 1000;
+
+    socket.on('wingo_init', (data) => {
+        updateTimer(data.timer);
+        document.getElementById('current-period').innerText = data.period;
+        renderHistory(data.history);
+    });
+
+    socket.on('wingo_tick', (data) => {
+        updateTimer(data.timer);
+        document.getElementById('current-period').innerText = data.period;
+
+        const lockOverlay = document.getElementById('lock-overlay');
+        if (data.isLocked) {
+            lockOverlay.style.display = 'flex';
+            document.getElementById('lock-seconds').innerText = data.timer;
+        } else {
+            lockOverlay.style.display = 'none';
+        }
+    });
+
+    socket.on('wingo_round_result', (result) => {
+        renderHistoryItem(result);
+    });
+
+    socket.on('wingo_payout', (payout) => {
+        if (payout.win) {
+            balance += payout.amount;
+            alert(`🎉 WIN! Period: ${payout.period}\nWinning No: ${payout.winningNumber}\nAmount Won: ₹${payout.amount}`);
+        } else {
+            alert(`💔 Round Over!\nWinning No: ${payout.winningNumber}`);
+        }
+        document.getElementById('wallet-balance').innerText = `₹ ${balance.toFixed(2)}`;
+    });
+
+    function updateTimer(seconds) {
+        const sec = seconds < 10 ? '0' + seconds : seconds;
+        document.getElementById('timer-display').innerText = `00:${sec}`;
+    }
+
+    function placeBet(type, selection) {
+        const amount = prompt(`Enter bet amount for ${selection}:`, "50");
+        const betAmt = parseFloat(amount);
+        if (!betAmt || betAmt <= 0) return;
+        if (betAmt > balance) return alert('Insufficient Balance!');
+
+        balance -= betAmt;
+        document.getElementById('wallet-balance').innerText = `₹ ${balance.toFixed(2)}`;
+
+        socket.emit('wingo_place_bet', {
+            selectType: type,
+            selection: selection,
+            amount: betAmt
+        });
+    }
+
+    function renderHistory(history) {
+        const container = document.getElementById('history-list');
+        container.innerHTML = '';
+        history.forEach(item => renderHistoryItem(item));
+    }
+
+    function renderHistoryItem(item) {
+        const container = document.getElementById('history-list');
+        const colorBg = item.number === 0 ? 'linear-gradient(135deg, #ff4757 50%, #9b51e0 50%)' 
+                      : item.number === 5 ? 'linear-gradient(135deg, #00c988 50%, #9b51e0 50%)'
+                      : item.color.includes('green') ? '#00c988' : '#ff4757';
+
+        const row = document.createElement('div');
+        row.className = 'history-row';
+        row.innerHTML = `
+            <span>${item.period}</span>
+            <span class="badge" style="background:${colorBg}">${item.number}</span>
+            <span style="text-transform:uppercase; font-weight:bold;">${item.bigSmall}</span>
+        `;
+        container.prepend(row);
+    }
+</script>
+</body>
+</html>
