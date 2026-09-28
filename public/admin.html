@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: #0c0e17; color: #fff; display: flex; justify-content: center; padding: 20px; }
-        .admin-wrap { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 18px; }
+        .admin-wrap { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 18px; }
 
         .top-bar { background: #161a29; border: 1px solid #232b40; border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
         .top-bar h1 { font-size: 18px; color: #f59e0b; letter-spacing: 1px; }
@@ -19,26 +19,25 @@
         .badge { font-size: 11px; padding: 4px 8px; border-radius: 12px; font-weight: 800; background: #222b42; color: #60a5fa; }
         .badge.active { background: #064e3b; color: #34d399; }
 
-        .input-group { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-        .input-group label { font-size: 12px; color: #8a99ad; font-weight: 700; text-transform: uppercase; }
-
-        .row-inputs { display: flex; gap: 8px; }
-        .num-input { flex: 1; background: #090c13; border: 1px solid #28334d; border-radius: 8px; color: #fff; padding: 10px 14px; font-size: 16px; font-weight: 800; }
+        .row-inputs { display: flex; gap: 8px; margin-top: 10px; }
+        .num-input { flex: 1; background: #090c13; border: 1px solid #28334d; border-radius: 8px; color: #fff; padding: 10px 14px; font-size: 15px; font-weight: 800; }
         .btn-set { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; border: none; border-radius: 8px; font-weight: 900; font-size: 13px; padding: 0 18px; cursor: pointer; text-transform: uppercase; }
-        .btn-set:active { transform: scale(0.97); }
 
         .quick-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
         .btn-quick { background: #1c2235; border: 1px solid #2c3752; color: #cbd5e1; border-radius: 6px; padding: 8px 0; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; }
-        .btn-quick:active { background: #2c3752; }
 
         .numbers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px; }
         .num-ball-btn { aspect-ratio: 1; border-radius: 50%; border: 2px solid #2b354d; background: #181f30; color: #fff; font-size: 16px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .num-ball-btn:active { transform: scale(0.92); }
         .num-ball-btn.green { border-color: #10b981; }
         .num-ball-btn.red { border-color: #ef4444; }
         .num-ball-btn.violet { border-color: #a855f7; }
 
-        .status-box { font-size: 12px; color: #94a3b8; line-height: 1.6; margin-top: 10px; background: #0b0e16; padding: 10px; border-radius: 8px; border: 1px dashed #232c40; }
+        .w-item { background: #0b0e16; border: 1px solid #232c40; border-radius: 10px; padding: 12px; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .w-top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 800; }
+        .w-details { font-size: 11px; color: #94a3b8; line-height: 1.4; background: #151a26; padding: 8px; border-radius: 6px; }
+        .w-actions { display: flex; gap: 8px; margin-top: 6px; }
+        .btn-approve { flex: 1; background: #10b981; color: #fff; border: none; padding: 8px 0; border-radius: 6px; font-weight: 900; cursor: pointer; font-size: 12px; }
+        .btn-reject { flex: 1; background: #ef4444; color: #fff; border: none; padding: 8px 0; border-radius: 6px; font-weight: 900; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -49,21 +48,29 @@
         <a href="/" class="back-link">◀ BACK TO LOBBY</a>
     </div>
 
+    <!-- WITHDRAWAL APPROVAL AUDIT -->
+    <div class="card" style="border-color: #f59e0b;">
+        <div class="card-header">
+            <span>💸 User Withdrawal Approval</span>
+            <span class="badge active" id="pending-count">0 PENDING</span>
+        </div>
+        <p style="font-size:12px; color:#8a99ad;">Pending withdrawal requests:</p>
+
+        <div id="withdrawal-list">
+            <div style="font-size:12px; color:#64748b; text-align:center; padding:15px;">No withdrawal requests right now.</div>
+        </div>
+    </div>
+
     <!-- Aviator Control -->
     <div class="card">
         <div class="card-header">
             <span>✈️ Aviator Crash Target</span>
             <span class="badge" id="aviator-status">Auto RNG</span>
         </div>
-        <p style="font-size:12px; color:#8a99ad;">Agle round ka exact crash multiplier yahan set karein:</p>
-        
-        <div class="input-group">
-            <div class="row-inputs">
-                <input type="number" id="aviator-input" class="num-input" placeholder="e.g. 1.20 or 10.50" step="0.05">
-                <button class="btn-set" onclick="setAviatorTarget()">SET CRASH</button>
-            </div>
+        <div class="row-inputs">
+            <input type="number" id="aviator-input" class="num-input" placeholder="e.g. 1.20 or 10.50" step="0.05">
+            <button class="btn-set" onclick="setAviatorTarget()">SET</button>
         </div>
-
         <div class="quick-buttons">
             <button class="btn-quick" onclick="quickSetAviator(1.05)">1.05x (Drop)</button>
             <button class="btn-quick" onclick="quickSetAviator(1.50)">1.50x</button>
@@ -78,8 +85,6 @@
             <span>🎨 Win Go Next Result</span>
             <span class="badge" id="wingo-status">Auto RNG</span>
         </div>
-        <p style="font-size:12px; color:#8a99ad;">Agli lottery ball ka number pre-decide karein (0 to 9):</p>
-
         <div class="numbers-grid">
             <button class="num-ball-btn violet" onclick="setWingoTarget(0)">0</button>
             <button class="num-ball-btn green" onclick="setWingoTarget(1)">1</button>
@@ -92,79 +97,107 @@
             <button class="num-ball-btn red" onclick="setWingoTarget(8)">8</button>
             <button class="num-ball-btn green" onclick="setWingoTarget(9)">9</button>
         </div>
-
-        <div class="status-box" id="live-info">
-            Loading live system status...
-        </div>
     </div>
 </div>
 
 <script>
+    async function loadWithdrawals() {
+        try {
+            const res = await fetch('/api/admin/withdrawals');
+            const data = await res.json();
+            const container = document.getElementById('withdrawal-list');
+            const pendingList = data.withdrawals.filter(w => w.status === 'Pending');
+            
+            document.getElementById('pending-count').innerText = `${pendingList.length} PENDING`;
+
+            if (data.withdrawals.length === 0) {
+                container.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;">No withdrawal requests right now.</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            data.withdrawals.forEach(w => {
+                const item = document.createElement('div');
+                item.className = 'w-item';
+
+                let detailsHtml = '';
+                if (w.type === 'BANK') {
+                    detailsHtml = `Name: <b>${w.details.name}</b> | A/C: <b>${w.details.acc}</b> | IFSC: <b>${w.details.ifsc}</b>`;
+                } else {
+                    detailsHtml = `UPI ID: <b>${w.details.upi}</b>`;
+                }
+
+                item.innerHTML = `
+                    <div class="w-top">
+                        <span>📱 ${w.phone} (${w.type})</span>
+                        <span style="color:#ffd700; font-size:16px;">₹${w.amount.toFixed(2)}</span>
+                    </div>
+                    <div class="w-details">${detailsHtml}</div>
+                    <div style="font-size:11px; color:#64748b;">Requested at: ${w.date} | Status: <b>${w.status}</b></div>
+                    ${w.status === 'Pending' ? `
+                        <div class="w-actions">
+                            <button class="btn-approve" onclick="actionWithdraw('${w.id}', 'Approve')">APPROVE (SUCCESS)</button>
+                            <button class="btn-reject" onclick="actionWithdraw('${w.id}', 'Reject')">REJECT</button>
+                        </div>
+                    ` : ''}
+                `;
+                container.appendChild(item);
+            });
+        } catch(e){}
+    }
+
+    async function actionWithdraw(id, action) {
+        if (!confirm(`Kya aap sure hain is request ko ${action} karne ke liye?`)) return;
+        const res = await fetch('/api/admin/withdraw-action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, action })
+        });
+        const data = await res.json();
+        alert(data.message);
+        loadWithdrawals();
+    }
+
+    loadWithdrawals();
+    setInterval(loadWithdrawals, 3000);
+
     async function updateStatus() {
         try {
             const res = await fetch('/api/admin/status');
             const data = await res.json();
-            
-            // Aviator status
             const aBadge = document.getElementById('aviator-status');
-            if (data.nextAviatorOverride !== null) {
-                aBadge.className = 'badge active';
-                aBadge.innerText = `OVERRIDE: ${data.nextAviatorOverride}x`;
-            } else {
-                aBadge.className = 'badge';
-                aBadge.innerText = 'AUTO RNG';
-            }
+            aBadge.innerText = (data.nextAviatorOverride !== null) ? `OVERRIDE: ${data.nextAviatorOverride}x` : 'AUTO RNG';
 
-            // Wingo status
             const wBadge = document.getElementById('wingo-status');
-            if (data.nextWingoOverride !== null) {
-                wBadge.className = 'badge active';
-                wBadge.innerText = `NEXT: #${data.nextWingoOverride}`;
-            } else {
-                wBadge.className = 'badge';
-                wBadge.innerText = 'AUTO RNG';
-            }
-
-            document.getElementById('live-info').innerHTML = `
-                <b>Current Period:</b> ${data.currentPeriod}<br>
-                <b>Win Go Countdown:</b> ${data.wingoTimer}s<br>
-                <b>Aviator Multiplier:</b> ${data.currentAviatorMult}x
-            `;
+            wBadge.innerText = (data.nextWingoOverride !== null) ? `NEXT: #${data.nextWingoOverride}` : 'AUTO RNG';
         } catch(e){}
     }
-
-    setInterval(updateStatus, 1000);
     updateStatus();
 
     async function setAviatorTarget() {
         const val = parseFloat(document.getElementById('aviator-input').value);
-        if (!val || val < 1.01) return alert('Enter a valid multiplier (min 1.01)');
-        
-        const res = await fetch('/api/admin/set-aviator', {
+        if (!val || val < 1.01) return alert('Enter valid crash point');
+        await fetch('/api/admin/set-aviator', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ crashPoint: val })
         });
-        const data = await res.json();
-        alert(data.message);
+        alert('Aviator target updated!');
         document.getElementById('aviator-input').value = '';
-        updateStatus();
     }
 
-    function quickSetAviator(amt) {
-        document.getElementById('aviator-input').value = amt;
+    function quickSetAviator(val) {
+        document.getElementById('aviator-input').value = val;
         setAviatorTarget();
     }
 
     async function setWingoTarget(num) {
-        const res = await fetch('/api/admin/set-wingo', {
+        await fetch('/api/admin/set-wingo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ number: num })
         });
-        const data = await res.json();
-        alert(data.message);
-        updateStatus();
+        alert(`Next Win Go number set to ${num}!`);
     }
 </script>
 </body>
