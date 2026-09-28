@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login / Register - Big Daddy</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: #0c0e17; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 440px; background: #121520; min-height: 100vh; display: flex; flex-direction: column; padding: 24px 20px; }
+
+        .logo-box { text-align: center; margin: 30px 0 25px 0; }
+        .logo-title { font-size: 26px; font-weight: 900; background: linear-gradient(135deg, #f5d061, #e6a119); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1.5px; }
+        .logo-subtitle { font-size: 12px; color: #8d98ab; margin-top: 5px; }
+
+        /* Auth Tabs */
+        .tab-box { display: flex; background: #1a1f2e; border-radius: 12px; padding: 4px; margin-bottom: 24px; border: 1px solid #28324a; }
+        .tab-btn { flex: 1; padding: 10px 0; text-align: center; font-size: 14px; font-weight: 800; border-radius: 9px; cursor: pointer; color: #8a99ad; transition: all 0.2s ease; }
+        .tab-btn.active { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; box-shadow: 0 2px 8px rgba(245,158,11,0.3); }
+
+        /* Form */
+        .form-panel { display: flex; flex-direction: column; gap: 14px; }
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-label { font-size: 12px; font-weight: 700; color: #8fa0b5; text-transform: uppercase; }
+
+        .field-wrap { display: flex; align-items: center; background: #090c13; border: 1px solid #28344e; border-radius: 10px; padding: 12px 14px; gap: 10px; }
+        .prefix { font-size: 14px; font-weight: 800; color: #f59e0b; border-right: 1px solid #28344e; padding-right: 10px; }
+        .text-input { background: transparent; border: none; outline: none; color: #fff; font-size: 15px; font-weight: 600; width: 100%; }
+
+        .btn-action { margin-top: 10px; width: 100%; padding: 14px; border-radius: 10px; border: none; font-size: 15px; font-weight: 900; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(245,158,11,0.3); }
+        .btn-action:active { transform: scale(0.98); }
+
+        .demo-hint { margin-top: 20px; font-size: 11px; color: #64748b; text-align: center; line-height: 1.5; background: #171b26; padding: 10px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="logo-box">
+        <div class="logo-title">BIG DADDY</div>
+        <div class="logo-subtitle">Official Online Gaming & Casino Platform</div>
+    </div>
+
+    <div class="tab-box">
+        <div class="tab-btn active" id="tab-login" onclick="switchTab('login')">LOGIN</div>
+        <div class="tab-btn" id="tab-register" onclick="switchTab('register')">REGISTER</div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="form-panel" id="login-form">
+        <div class="input-group">
+            <label class="input-label">Mobile Number</label>
+            <div class="field-wrap">
+                <span class="prefix">+91</span>
+                <input type="tel" id="login-phone" class="text-input" placeholder="Enter 10-digit number" maxlength="10">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">Password</label>
+            <div class="field-wrap">
+                <input type="password" id="login-pass" class="text-input" placeholder="Enter password">
+            </div>
+        </div>
+
+        <button class="btn-action" onclick="handleLogin()">LOGIN NOW</button>
+    </div>
+
+    <!-- Register Form -->
+    <div class="form-panel" id="register-form" style="display: none;">
+        <div class="input-group">
+            <label class="input-label">Mobile Number</label>
+            <div class="field-wrap">
+                <span class="prefix">+91</span>
+                <input type="tel" id="reg-phone" class="text-input" placeholder="Enter 10-digit number" maxlength="10">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">Set Password</label>
+            <div class="field-wrap">
+                <input type="password" id="reg-pass" class="text-input" placeholder="Minimum 6 characters">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label">Invite Code (Optional)</label>
+            <div class="field-wrap">
+                <input type="text" id="reg-invite" class="text-input" placeholder="e.g. BDG888" value="BDG888">
+            </div>
+        </div>
+
+        <button class="btn-action" onclick="handleRegister()">REGISTER & GET ₹1,000 BONUS</button>
+    </div>
+
+    <div class="demo-hint">
+        🔒 <b>Safe & Instant:</b> Register karne par aapke wallet mein ₹1,000 welcome bonus seedha credit hoga!
+    </div>
+</div>
+
+<script>
+    function switchTab(type) {
+        if (type === 'login') {
+            document.getElementById('tab-login').classList.add('active');
+            document.getElementById('tab-register').classList.remove('active');
+            document.getElementById('login-form').style.display = 'flex';
+            document.getElementById('register-form').style.display = 'none';
+        } else {
+            document.getElementById('tab-register').classList.add('active');
+            document.getElementById('tab-login').classList.remove('active');
+            document.getElementById('register-form').style.display = 'flex';
+            document.getElementById('login-form').style.display = 'none';
+        }
+    }
+
+    function handleRegister() {
+        const phone = document.getElementById('reg-phone').value.trim();
+        const pass = document.getElementById('reg-pass').value.trim();
+
+        if (phone.length !== 10 || isNaN(phone)) {
+            return alert('Kripya 10 digit ka valid mobile number dalein!');
+        }
+        if (pass.length < 4) {
+            return alert('Password kam se kam 4 characters ka hona chahiye!');
+        }
+
+        // Store user in localStorage
+        const users = JSON.parse(localStorage.getItem('bdg_users') || '{}');
+        users[phone] = { phone, pass, balance: 1000.00 };
+        localStorage.setItem('bdg_users', JSON.stringify(users));
+
+        // Set Active Session
+        localStorage.setItem('bdg_auth_user', phone);
+        localStorage.setItem('bdg_balance', 1000.00);
+
+        alert('🎉 Registration Successful! Welcome Bonus ₹1,000 credited.');
+        window.location.href = '/';
+    }
+
+    function handleLogin() {
+        const phone = document.getElementById('login-phone').value.trim();
+        const pass = document.getElementById('login-pass').value.trim();
+
+        if (!phone || !pass) return alert('Phone aur Password dono fill karein!');
+
+        const users = JSON.parse(localStorage.getItem('bdg_users') || '{}');
+        const user = users[phone];
+
+        // Allow demo quick login agar account nahi bhi banaya ho
+        if (!user) {
+            // Auto register demo
+            users[phone] = { phone, pass, balance: 1000.00 };
+            localStorage.setItem('bdg_users', JSON.stringify(users));
+        }
+
+        localStorage.setItem('bdg_auth_user', phone);
+        if (!localStorage.getItem('bdg_balance')) {
+            localStorage.setItem('bdg_balance', 1000.00);
+        }
+
+        alert('✅ Login Successful!');
+        window.location.href = '/';
+    }
+</script>
+</body>
+</html>
