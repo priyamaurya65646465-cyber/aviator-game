@@ -1,194 +1,131 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const cors = require('cors');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
-
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
-
-// ---------------- GLOBAL STATE ----------------
-let adminConfig = {
-    upiId: 'merchant@upi',
-    qrCodeBase64: ''
-};
-let pendingDeposits = [];
-
-// ---------------- 1. AVIATOR ENGINE ----------------
-let aviatorMultiplier = 1.00;
-let aviatorState = 'WAITING'; // WAITING, FLYING, CRASHED
-let aviatorCrashPoint = 2.00;
-let aviatorBets = [];
-
-function generateCrashPoint() {
-    const rand = Math.random();
-    if (rand < 0.05) return 1.00; // 5% instant crash
-    return parseFloat((0.99 / (1 - rand)).toFixed(2));
-}
-
-function startAviatorLoop() {
-    aviatorState = 'WAITING';
-    aviatorMultiplier = 1.00;
-    aviatorCrashPoint = generateCrashPoint();
-    aviatorBets = [];
-    io.emit('aviator_state', { state: 'WAITING', multiplier: 1.00 });
-
-    setTimeout(() => {
-        aviatorState = 'FLYING';
-        let startTime = Date.now();
-
-        const interval = setInterval(() => {
-            const elapsed = (Date.now() - startTime) / 1000;
-            aviatorMultiplier = parseFloat((1.00 * Math.pow(1.06, elapsed * 5)).toFixed(2));
-
-            if (aviatorMultiplier >= aviatorCrashPoint) {
-                clearInterval(interval);
-                aviatorState = 'CRASHED';
-                io.emit('aviator_state', { state: 'CRASHED', multiplier: aviatorMultiplier });
-                setTimeout(startAviatorLoop, 4000);
-            } else {
-                io.emit('aviator_state', { state: 'FLYING', multiplier: aviatorMultiplier });
-            }
-        }, 100);
-    }, 5000);
-}
-startAviatorLoop();
-
-// ---------------- 2. COLOR PREDICTION (WINGO 60s) ENGINE ----------------
-let wingoTimer = 60;
-let wingoPeriod = Date.now().toString().slice(-10); // Unique Round ID
-let wingoBets = [];
-let wingoHistory = [
-    { period: '20260901', number: 7, color: ['green'], bigSmall: 'big' },
-    { period: '20260902', number: 2, color: ['red'], bigSmall: 'small' },
-    { period: '20260903', number: 0, color: ['red', 'violet'], bigSmall: 'small' },
-    { period: '20260904', number: 5, color: ['green', 'violet'], bigSmall: 'big' }
-];
-
-function calculateColorResult(number) {
-    let colors = [];
-    if (number === 0) colors = ['red', 'violet'];
-    else if (number === 5) colors = ['green', 'violet'];
-    else if ([1, 3, 7, 9].includes(number)) colors = ['green'];
-    else colors = ['red'];
-
-    let bigSmall = number >= 5 ? 'big' : 'small';
-    return { number, colors, bigSmall };
-}
-
-function resolveWingoRound() {
-    // 0 to 9 random result generate karein
-    const winningNumber = Math.floor(Math.random() * 10);
-    const { colors, bigSmall } = calculateColorResult(winningNumber);
-
-    const roundResult = {
-        period: wingoPeriod,
-        number: winningNumber,
-        color: colors,
-        bigSmall: bigSmall
-    };
-
-    wingoHistory.unshift(roundResult);
-    if (wingoHistory.length > 20) wingoHistory.pop();
-
-    // Winners calculate karke payout emit karein
-    wingoBets.forEach(bet => {
-        let winMultiplier = 0;
-
-        // Number bet (9x)
-        if (bet.selectType === 'number' && parseInt(bet.selection) === winningNumber) {
-            winMultiplier = 9;
-        }
-        // Big / Small bet (2x)
-        else if (bet.selectType === 'bigSmall' && bet.selection === bigSmall) {
-            winMultiplier = 2;
-        }
-        // Color bet
-        else if (bet.selectType === 'color') {
-            if (bet.selection === 'violet' && colors.includes('violet')) {
-                winMultiplier = 4.5;
-            } else if (bet.selection === 'green' && colors.includes('green')) {
-                winMultiplier = winningNumber === 5 ? 1.5 : 2;
-            } else if (bet.selection === 'red' && colors.includes('red')) {
-                winMultiplier = winningNumber === 0 ? 1.5 : 2;
-            }
-        }
-
-        const winAmount = bet.amount * winMultiplier;
-        io.to(bet.socketId).emit('wingo_payout', {
-            period: wingoPeriod,
-            win: winAmount > 0,
-            amount: winAmount,
-            winningNumber: winningNumber,
-            color: colors
-        });
-    });
-
-    io.emit('wingo_round_result', roundResult);
-
-    // Naya round start karein
-    wingoPeriod = (parseInt(wingoPeriod) + 1).toString();
-    wingoBets = [];
-    wingoTimer = 60;
-}
-
-// 60-second background clock
-setInterval(() => {
-    wingoTimer--;
-
-    io.emit('wingo_tick', {
-        timer: wingoTimer,
-        period: wingoPeriod,
-        isLocked: wingoTimer <= 10 // Aakhri 10s me betting band
-    });
-
-    if (wingoTimer <= 0) {
-        resolveWingoRound();
-    }
-}, 1000);
-
-// ---------------- SOCKET COMMUNICATION ----------------
-io.on('connection', (socket) => {
-    // Initial color game state bhejein
-    socket.emit('wingo_init', {
-        timer: wingoTimer,
-        period: wingoPeriod,
-        history: wingoHistory,
-        isLocked: wingoTimer <= 10
-    });
-
-    // Color Game Bet lagana
-    socket.on('wingo_place_bet', (data) => {
-        // data = { selectType: 'color'|'number'|'bigSmall', selection: 'green'|5|'big', amount: 100 }
-        if (wingoTimer <= 10) {
-            return socket.emit('wingo_bet_error', { message: 'Betting is locked for this round!' });
-        }
-        wingoBets.push({ socketId: socket.id, ...data });
-        socket.emit('wingo_bet_success', { message: 'Bet placed successfully!', bet: data });
-    });
-
-    // Admin & Deposit events
-    socket.on('get_admin_config', () => socket.emit('admin_config', adminConfig));
-    socket.on('update_admin_config', (cfg) => {
-        adminConfig = { ...adminConfig, ...cfg };
-        io.emit('admin_config', adminConfig);
-    });
-
-    socket.on('submit_deposit', (dep) => {
-        pendingDeposits.push({ id: Date.now(), ...dep, status: 'PENDING' });
-        io.emit('pending_deposits', pendingDeposits);
-    });
-
-    socket.on('verify_deposit', ({ id, action }) => {
-        pendingDeposits = pendingDeposits.map(d => d.id === id ? { ...d, status: action } : d);
-        io.emit('pending_deposits', pendingDeposits);
-    });
+const io = new Server(server, {
+    cors: { origin: "*" }
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Game Server running on port ${PORT}`));
+
+// Serve static frontend files from 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Default route to lobby
+app.get('*', (req, res, next) => {
+    if (req.url.includes('.')) return next();
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ==========================================
+// 1. AVIATOR ENGINE (Continuous Self-Loop)
+// ==========================================
+let aviatorMult = 1.00;
+let aviatorFlying = false;
+let aviatorCrashPoint = 2.00;
+let aviatorTimer = null;
+
+function startAviatorRound() {
+    aviatorMult = 1.00;
+    aviatorFlying = true;
+
+    // Crash point generation: 1.00x se lekar 20.00x tak random
+    const rand = Math.random();
+    if (rand < 0.10) {
+        aviatorCrashPoint = 1.05; // 10% instant crash
+    } else if (rand < 0.70) {
+        aviatorCrashPoint = parseFloat((1.10 + Math.random() * 2.5).toFixed(2)); // Normal 1.1x - 3.6x
+    } else {
+        aviatorCrashPoint = parseFloat((3.5 + Math.random() * 15.0).toFixed(2)); // High 3.5x - 18.5x
+    }
+
+    console.log(`[Aviator] Round Started! Targets Crash: ${aviatorCrashPoint}x`);
+
+    aviatorTimer = setInterval(() => {
+        if (aviatorMult >= aviatorCrashPoint) {
+            // Crash ho gaya
+            clearInterval(aviatorTimer);
+            aviatorFlying = false;
+            console.log(`[Aviator] Crashed at: ${aviatorCrashPoint}x`);
+            io.emit('aviator_crash', aviatorCrashPoint);
+
+            // 4 seconds ke break ke baad agla round shuru
+            setTimeout(() => {
+                startAviatorRound();
+            }, 4000);
+        } else {
+            // Har 100ms mein smooth multiplier increment
+            aviatorMult = parseFloat((aviatorMult + 0.02 * Math.pow(aviatorMult, 0.4)).toFixed(2));
+            io.emit('aviator_tick', aviatorMult);
+        }
+    }, 100);
+}
+
+// Server start hote hi Aviator loop chalu
+startAviatorRound();
+
+// ==========================================
+// 2. WINGO 1MIN ENGINE
+// ==========================================
+let wingoTimer = 60;
+let currentPeriod = "202609001";
+let wingoHistory = [
+    { period: "202609000", number: 7, color: "green", bigSmall: "big" }
+];
+
+setInterval(() => {
+    wingoTimer--;
+    if (wingoTimer <= 0) {
+        const winningNumber = Math.floor(Math.random() * 10);
+        const color = winningNumber === 0 ? "red-violet" : winningNumber === 5 ? "green-violet" : winningNumber % 2 === 0 ? "red" : "green";
+        const bigSmall = winningNumber >= 5 ? "big" : "small";
+
+        const roundResult = {
+            period: currentPeriod,
+            number: winningNumber,
+            color: color,
+            bigSmall: bigSmall
+        };
+
+        wingoHistory.unshift(roundResult);
+        if (wingoHistory.length > 15) wingoHistory.pop();
+
+        io.emit('wingo_round_result', roundResult);
+
+        // Reset next period
+        currentPeriod = (BigInt(currentPeriod) + 1n).toString();
+        wingoTimer = 60;
+    }
+
+    io.emit('wingo_tick', {
+        timer: wingoTimer,
+        period: currentPeriod,
+        isLocked: wingoTimer <= 10
+    });
+}, 1000);
+
+// ==========================================
+// 3. SOCKET CONNECTION
+// ==========================================
+io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+
+    // Initial data to user
+    socket.emit('wingo_init', {
+        timer: wingoTimer,
+        period: currentPeriod,
+        history: wingoHistory
+    });
+
+    if (aviatorFlying) {
+        socket.emit('aviator_tick', aviatorMult);
+    }
+});
+
+// Start Server
+server.listen(PORT, () => {
+    console.log(`Server running smoothly on port ${PORT}`);
+});
