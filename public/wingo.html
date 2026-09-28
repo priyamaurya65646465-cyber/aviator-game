@@ -3,174 +3,304 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Win Go 1Min - Big Daddy Style</title>
+    <title>Win Go 1Min - Big Daddy</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #1a1a24; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
-        .app-container { width: 100%; max-width: 440px; background: #12121a; min-height: 100vh; padding-bottom: 70px; position: relative; }
-        .header { background: #222232; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2d42; }
-        .wallet-box { background: linear-gradient(135deg, #d4af37, #aa7c11); padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 14px; color: #000; }
-        .game-banner { margin: 15px; background: linear-gradient(135deg, #2b1f3d, #1f1b2e); border: 1px solid #3d2b56; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .period-info span { color: #8e8ea8; font-size: 12px; }
-        .period-info h3 { font-size: 18px; color: #f1c40f; margin-top: 4px; }
-        .countdown-box { text-align: right; }
-        .countdown-box span { font-size: 12px; color: #8e8ea8; }
-        .timer-display { font-size: 26px; font-weight: 800; color: #00ffcc; letter-spacing: 2px; }
-        .color-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 15px; }
-        .btn-action { border: none; padding: 12px 0; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; color: white; transition: 0.2s; }
-        .btn-green { background: #00c988; box-shadow: 0 4px 10px rgba(0,201,136,0.3); }
-        .btn-violet { background: #9b51e0; box-shadow: 0 4px 10px rgba(155,81,224,0.3); }
-        .btn-red { background: #ff4757; box-shadow: 0 4px 10px rgba(255,71,87,0.3); }
-        .numbers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 15px; background: #1c1c2b; padding: 15px; border-radius: 12px; }
-        .num-ball { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; border: none; color: #fff; }
-        .ball-0 { background: linear-gradient(135deg, #ff4757 50%, #9b51e0 50%); }
-        .ball-5 { background: linear-gradient(135deg, #00c988 50%, #9b51e0 50%); }
-        .ball-green { background: #00c988; }
-        .ball-red { background: #ff4757; }
-        .big-small-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px; }
-        .btn-big { background: #ff9f43; }
-        .btn-small { background: #54a0ff; }
-        .lock-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 100; border-radius: 12px; }
-        .lock-count { font-size: 70px; font-weight: 900; color: #ff4757; }
-        .history-card { margin: 15px; background: #1c1c2b; border-radius: 12px; padding: 15px; }
-        .history-card h4 { font-size: 14px; margin-bottom: 10px; color: #8e8ea8; }
-        .history-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #27273d; font-size: 13px; }
-        .badge { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background: #0c0f17; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 440px; background: #12151f; min-height: 100vh; padding-bottom: 30px; display: flex; flex-direction: column; position: relative; }
+
+        /* Header */
+        .header { background: #191e2b; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #232a3d; }
+        .back-btn { color: #f59e0b; text-decoration: none; font-size: 13px; font-weight: 700; }
+        .wallet-pill { background: #1f2638; border: 1px solid #2e3953; padding: 6px 14px; border-radius: 20px; font-weight: 800; color: #10b981; font-size: 14px; }
+
+        /* Game Timer Stage */
+        .stage-card { margin: 12px; background: linear-gradient(135deg, #1e2436, #141724); border-radius: 14px; padding: 16px; border: 1px solid #2d364e; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: flex; justify-content: space-between; align-items: center; }
+        .period-info { display: flex; flex-direction: column; gap: 4px; }
+        .period-title { font-size: 11px; color: #8a99ad; text-transform: uppercase; font-weight: 700; }
+        .period-number { font-size: 18px; font-weight: 900; color: #f59e0b; letter-spacing: 1px; }
+
+        .timer-box { display: flex; flex-direction: column; align-items: flex-end; }
+        .timer-digits { display: flex; gap: 4px; }
+        .time-box { background: #0b0e14; border: 1px solid #2d364d; border-radius: 6px; padding: 6px 8px; font-size: 22px; font-weight: 900; color: #ef4444; min-width: 32px; text-align: center; }
+
+        /* Color Betting Ribbon */
+        .color-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 12px 12px 12px; }
+        .btn-color { padding: 14px 0; border-radius: 10px; border: none; font-size: 15px; font-weight: 900; color: #fff; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.05s ease; }
+        .btn-color:active { transform: scale(0.96); }
+        .color-green { background: linear-gradient(135deg, #10b981, #059669); }
+        .color-violet { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+        .color-red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+
+        /* Number Balls Grid */
+        .balls-container { margin: 0 12px 14px 12px; background: #171b26; padding: 14px; border-radius: 14px; border: 1px solid #262e42; }
+        .numbers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .ball { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; color: #fff; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2); }
+        .ball:active { transform: scale(0.92); }
+
+        /* Big / Small Choice */
+        .big-small-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 12px 16px 12px; }
+        .btn-bs { padding: 13px 0; border-radius: 10px; border: none; font-size: 15px; font-weight: 900; color: #fff; cursor: pointer; text-transform: uppercase; }
+        .btn-bs:active { transform: scale(0.97); }
+        .bs-big { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .bs-small { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+
+        /* History Table */
+        .history-card { margin: 0 12px; background: #161a25; border-radius: 12px; padding: 12px; border: 1px solid #232938; }
+        .hist-header { font-size: 13px; font-weight: 800; color: #cbd5e1; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .hist-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .hist-table th { color: #64748b; padding: 6px 4px; text-align: center; }
+        .hist-table td { padding: 8px 4px; text-align: center; border-top: 1px solid #1f2533; font-weight: 700; }
+
+        /* Modal Betting Dialog */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: flex-end; justify-content: center; z-index: 100; }
+        .modal-box { width: 100%; max-width: 440px; background: #191e2b; border-radius: 20px 20px 0 0; padding: 20px 16px; border-top: 1px solid #2e374d; }
+        .modal-title { font-size: 16px; font-weight: 800; text-align: center; margin-bottom: 14px; text-transform: uppercase; }
+        .chip-stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+        .amt-chip { background: #232a3d; border: 1px solid #333d57; color: #cbd5e1; padding: 9px 0; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; text-align: center; }
+        .amt-chip.active { background: #f59e0b; color: #000; font-weight: 900; }
+        .btn-confirm { width: 100%; padding: 14px; border-radius: 10px; border: none; font-size: 15px; font-weight: 900; background: #10b981; color: #fff; cursor: pointer; text-transform: uppercase; }
+
+        /* Lock Overlay when countdown <= 5s */
+        .lock-badge { position: absolute; inset: 0; background: rgba(10,13,20,0.85); display: none; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; color: #ef4444; border-radius: 14px; z-index: 20; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="header">
-        <h3 style="color:#d4af37;">WINGO 1Min</h3>
-        <div class="wallet-box" id="wallet-balance">₹ 1000.00</div>
+        <a href="/" class="back-btn">◀ LOBBY</a>
+        <div class="wallet-pill" id="wallet-text">₹ 1,000.00</div>
     </div>
 
-    <div class="game-banner" style="position: relative;">
+    <!-- Stage & Timer -->
+    <div class="stage-card">
         <div class="period-info">
-            <span>Period</span>
-            <h3 id="current-period">Loading...</h3>
+            <span class="period-title">Period</span>
+            <span class="period-number" id="period-display">Loading...</span>
         </div>
-        <div class="countdown-box">
-            <span>Time Remaining</span>
-            <div class="timer-display" id="timer-display">00:60</div>
+        <div class="timer-box">
+            <span class="period-title">Time Remaining</span>
+            <div class="timer-digits">
+                <div class="time-box" id="min-box">00</div>
+                <div class="time-box" id="sec-box">60</div>
+            </div>
         </div>
-        <div class="lock-overlay" id="lock-overlay">
-            <div class="lock-count" id="lock-seconds">10</div>
-            <p style="color:#fff; font-size:14px; margin-top:10px;">Betting Closed</p>
+    </div>
+
+    <!-- Interactive Betting Deck with Lock Overlay -->
+    <div style="position: relative;">
+        <div class="lock-badge" id="lock-screen">COUNTDOWN LOCKED</div>
+
+        <!-- Color Bet -->
+        <div class="color-row">
+            <button class="btn-color color-green" onclick="openBet('Green', 2.0)">Green (2x)</button>
+            <button class="btn-color color-violet" onclick="openBet('Violet', 4.5)">Violet (4.5x)</button>
+            <button class="btn-color color-red" onclick="openBet('Red', 2.0)">Red (2x)</button>
+        </div>
+
+        <!-- Number Balls Grid -->
+        <div class="balls-container">
+            <div class="numbers-grid" id="balls-grid"></div>
+        </div>
+
+        <!-- Big / Small -->
+        <div class="big-small-row">
+            <button class="btn-bs bs-big" onclick="openBet('Big (5-9)', 2.0)">Big</button>
+            <button class="btn-bs bs-small" onclick="openBet('Small (0-4)', 2.0)">Small</button>
         </div>
     </div>
 
-    <div class="color-actions">
-        <button class="btn-action btn-green" onclick="placeBet('color', 'green')">Green</button>
-        <button class="btn-action btn-violet" onclick="placeBet('color', 'violet')">Violet</button>
-        <button class="btn-action btn-red" onclick="placeBet('color', 'red')">Red</button>
-    </div>
-
-    <div class="numbers-grid">
-        <button class="num-ball ball-0" onclick="placeBet('number', 0)">0</button>
-        <button class="num-ball ball-green" onclick="placeBet('number', 1)">1</button>
-        <button class="num-ball ball-red" onclick="placeBet('number', 2)">2</button>
-        <button class="num-ball ball-green" onclick="placeBet('number', 3)">3</button>
-        <button class="num-ball ball-red" onclick="placeBet('number', 4)">4</button>
-        <button class="num-ball ball-5" onclick="placeBet('number', 5)">5</button>
-        <button class="num-ball ball-red" onclick="placeBet('number', 6)">6</button>
-        <button class="num-ball ball-green" onclick="placeBet('number', 7)">7</button>
-        <button class="num-ball ball-red" onclick="placeBet('number', 8)">8</button>
-        <button class="num-ball ball-green" onclick="placeBet('number', 9)">9</button>
-    </div>
-
-    <div class="big-small-actions">
-        <button class="btn-action btn-big" onclick="placeBet('bigSmall', 'big')">Big (5-9)</button>
-        <button class="btn-action btn-small" onclick="placeBet('bigSmall', 'small')">Small (0-4)</button>
-    </div>
-
+    <!-- History Ribbon -->
     <div class="history-card">
-        <h4>Game History</h4>
-        <div id="history-list"></div>
+        <div class="hist-header">
+            <span>Game History</span>
+            <span style="color:#f59e0b;">Win Go 1Min</span>
+        </div>
+        <table class="hist-table">
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    <th>Number</th>
+                    <th>Big/Small</th>
+                    <th>Color</th>
+                </tr>
+            </thead>
+            <tbody id="hist-body"></tbody>
+        </table>
+    </div>
+
+    <!-- Bet Modal Bottom Sheet -->
+    <div class="modal-overlay" id="bet-modal">
+        <div class="modal-box">
+            <div class="modal-title" id="modal-select-name">Select Bet</div>
+            <div class="chip-stepper">
+                <div class="amt-chip active" onclick="selectChip(this, 10)">₹10</div>
+                <div class="amt-chip" onclick="selectChip(this, 50)">₹50</div>
+                <div class="amt-chip" onclick="selectChip(this, 100)">₹100</div>
+                <div class="amt-chip" onclick="selectChip(this, 500)">₹500</div>
+            </div>
+            <button class="btn-confirm" onclick="confirmBet()">CONFIRM BET</button>
+        </div>
     </div>
 </div>
 
 <script>
     const socket = io();
-    let balance = 1000;
 
-    socket.on('wingo_init', (data) => {
-        updateTimer(data.timer);
-        document.getElementById('current-period').innerText = data.period;
-        renderHistory(data.history);
-    });
+    // Audio FX
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq, type = 'sine', duration = 0.1) {
+        try {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e){}
+    }
+
+    // Shared Wallet
+    let balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
+    const walletText = document.getElementById('wallet-text');
+    function updateWallet() {
+        walletText.innerText = `₹ ${balance.toFixed(2)}`;
+        localStorage.setItem('bdg_balance', balance);
+    }
+    updateWallet();
+
+    // Build Colored Number Balls (0-9)
+    const ballsGrid = document.getElementById('balls-grid');
+    const ballColors = {
+        0: 'linear-gradient(135deg, #ef4444 50%, #a855f7 50%)',
+        1: '#10b981', 2: '#ef4444', 3: '#10b981', 4: '#ef4444',
+        5: 'linear-gradient(135deg, #10b981 50%, #a855f7 50%)',
+        6: '#ef4444', 7: '#10b981', 8: '#ef4444', 9: '#10b981'
+    };
+
+    for (let i = 0; i < 10; i++) {
+        const b = document.createElement('div');
+        b.className = 'ball';
+        b.style.background = ballColors[i];
+        b.innerText = i;
+        b.onclick = () => openBet(`Number ${i}`, 9.0);
+        ballsGrid.appendChild(b);
+    }
+
+    // Modal & Betting Logic
+    let currentSelection = null;
+    let selectedAmount = 10;
+    let placedBets = [];
+
+    function openBet(name, odds) {
+        currentSelection = { name, odds };
+        document.getElementById('modal-select-name').innerText = `Bet on ${name} (${odds}x)`;
+        document.getElementById('bet-modal').style.display = 'flex';
+        playBeep(450);
+    }
+
+    function selectChip(el, amt) {
+        document.querySelectorAll('.amt-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        selectedAmount = amt;
+        playBeep(500);
+    }
+
+    function confirmBet() {
+        if (selectedAmount > balance) return alert('Low Balance!');
+        balance -= selectedAmount;
+        updateWallet();
+
+        placedBets.push({
+            type: currentSelection.name,
+            amount: selectedAmount,
+            odds: currentSelection.odds
+        });
+
+        document.getElementById('bet-modal').style.display = 'none';
+        playBeep(650, 'triangle', 0.2);
+        alert(`✅ Bet Placed: ₹${selectedAmount} on ${currentSelection.name}`);
+    }
+
+    // Close modal on outside click
+    document.getElementById('bet-modal').onclick = (e) => {
+        if (e.target.id === 'bet-modal') document.getElementById('bet-modal').style.display = 'none';
+    };
+
+    // Socket Integration
+    const periodDisplay = document.getElementById('period-display');
+    const secBox = document.getElementById('sec-box');
+    const lockScreen = document.getElementById('lock-screen');
+    const histBody = document.getElementById('hist-body');
 
     socket.on('wingo_tick', (data) => {
-        updateTimer(data.timer);
-        document.getElementById('current-period').innerText = data.period;
+        periodDisplay.innerText = data.period;
+        let s = data.timer < 10 ? '0' + data.timer : data.timer;
+        secBox.innerText = s;
 
-        const lockOverlay = document.getElementById('lock-overlay');
         if (data.isLocked) {
-            lockOverlay.style.display = 'flex';
-            document.getElementById('lock-seconds').innerText = data.timer;
+            lockScreen.style.display = 'flex';
         } else {
-            lockOverlay.style.display = 'none';
+            lockScreen.style.display = 'none';
         }
     });
 
-    socket.on('wingo_round_result', (result) => {
-        renderHistoryItem(result);
-    });
-
-    socket.on('wingo_payout', (payout) => {
-        if (payout.win) {
-            balance += payout.amount;
-            alert(`🎉 WIN! Period: ${payout.period}\nWinning No: ${payout.winningNumber}\nAmount Won: ₹${payout.amount}`);
-        } else {
-            alert(`💔 Round Over!\nWinning No: ${payout.winningNumber}`);
-        }
-        document.getElementById('wallet-balance').innerText = `₹ ${balance.toFixed(2)}`;
-    });
-
-    function updateTimer(seconds) {
-        const sec = seconds < 10 ? '0' + seconds : seconds;
-        document.getElementById('timer-display').innerText = `00:${sec}`;
-    }
-
-    function placeBet(type, selection) {
-        const amount = prompt(`Enter bet amount for ${selection}:`, "50");
-        const betAmt = parseFloat(amount);
-        if (!betAmt || betAmt <= 0) return;
-        if (betAmt > balance) return alert('Insufficient Balance!');
-
-        balance -= betAmt;
-        document.getElementById('wallet-balance').innerText = `₹ ${balance.toFixed(2)}`;
-
-        socket.emit('wingo_place_bet', {
-            selectType: type,
-            selection: selection,
-            amount: betAmt
-        });
-    }
-
-    function renderHistory(history) {
-        const container = document.getElementById('history-list');
-        container.innerHTML = '';
-        history.forEach(item => renderHistoryItem(item));
-    }
-
-    function renderHistoryItem(item) {
-        const container = document.getElementById('history-list');
-        const colorBg = item.number === 0 ? 'linear-gradient(135deg, #ff4757 50%, #9b51e0 50%)' 
-                      : item.number === 5 ? 'linear-gradient(135deg, #00c988 50%, #9b51e0 50%)'
-                      : item.color.includes('green') ? '#00c988' : '#ff4757';
-
-        const row = document.createElement('div');
-        row.className = 'history-row';
+    socket.on('wingo_round_result', (res) => {
+        // Add to history table
+        const row = document.createElement('tr');
         row.innerHTML = `
-            <span>${item.period}</span>
-            <span class="badge" style="background:${colorBg}">${item.number}</span>
-            <span style="text-transform:uppercase; font-weight:bold;">${item.bigSmall}</span>
+            <td>${res.period.slice(-4)}</td>
+            <td style="font-size:15px; font-weight:900;">${res.number}</td>
+            <td><span style="color:${res.bigSmall === 'big' ? '#f59e0b' : '#3b82f6'};">${res.bigSmall.toUpperCase()}</span></td>
+            <td><span style="color:${res.color.includes('green') ? '#10b981' : '#ef4444'};">${res.color}</span></td>
         `;
-        container.prepend(row);
-    }
+        histBody.prepend(row);
+        if (histBody.children.length > 8) histBody.removeChild(histBody.lastChild);
+
+        // Check user bets
+        placedBets.forEach(b => {
+            let won = false;
+            if (b.type.includes('Green') && res.color.includes('green')) won = true;
+            if (b.type.includes('Red') && res.color.includes('red')) won = true;
+            if (b.type.includes('Violet') && res.color.includes('violet')) won = true;
+            if (b.type.includes('Big') && res.bigSmall === 'big') won = true;
+            if (b.type.includes('Small') && res.bigSmall === 'small') won = true;
+            if (b.type === `Number ${res.number}`) won = true;
+
+            if (won) {
+                let winAmt = b.amount * b.odds;
+                balance += winAmt;
+                updateWallet();
+                alert(`🎉 CONGRATS! You won ₹${winAmt.toFixed(2)} on ${b.type}!`);
+            }
+        });
+        placedBets = [];
+    });
+
+    socket.on('wingo_init', (data) => {
+        periodDisplay.innerText = data.period;
+        let s = data.timer < 10 ? '0' + data.timer : data.timer;
+        secBox.innerText = s;
+
+        histBody.innerHTML = '';
+        data.history.forEach(res => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${res.period.slice(-4)}</td>
+                <td style="font-size:15px; font-weight:900;">${res.number}</td>
+                <td><span style="color:${res.bigSmall === 'big' ? '#f59e0b' : '#3b82f6'};">${res.bigSmall.toUpperCase()}</span></td>
+                <td><span style="color:${res.color.includes('green') ? '#10b981' : '#ef4444'};">${res.color}</span></td>
+            `;
+            histBody.appendChild(row);
+        });
+    });
 </script>
 </body>
 </html>
