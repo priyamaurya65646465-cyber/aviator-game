@@ -10,19 +10,16 @@
         body { background: #07080d; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
         .app-container { width: 100%; max-width: 440px; background: #0e1017; min-height: 100vh; display: flex; flex-direction: column; }
 
-        /* Header */
         .header { background: #141722; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2436; }
         .back-btn { color: #f59e0b; text-decoration: none; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
         .wallet-pill { background: #1b2030; border: 1px solid #2a334d; padding: 6px 14px; border-radius: 20px; font-weight: 800; color: #10b981; font-size: 14px; }
 
-        /* Past Multipliers Bar */
-        .history-strip { background: #0b0d13; display: flex; gap: 6px; padding: 8px 12px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid #1a1e2b; }
+        .history-strip { background: #0b0d13; display: flex; gap: 6px; padding: 8px 12px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid #1a1e2b; min-height: 34px; }
         .history-strip::-webkit-scrollbar { display: none; }
-        .hist-chip { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 12px; background: #191e2b; color: #3b82f6; }
+        .hist-chip { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 12px; background: #191e2b; color: #3b82f6; white-space: nowrap; }
         .hist-chip.high { color: #ec4899; }
         .hist-chip.super { color: #eab308; }
 
-        /* Canvas Stage */
         .canvas-container { position: relative; width: 100%; height: 260px; background: radial-gradient(circle at 10% 90%, #1a0b12 0%, #08090d 80%); overflow: hidden; border-bottom: 2px solid #1a1e2d; }
         canvas { width: 100%; height: 100%; display: block; }
         
@@ -30,7 +27,6 @@
         .mult-val { font-size: 54px; font-weight: 900; letter-spacing: -1px; text-shadow: 0 4px 20px rgba(0,0,0,0.8); }
         .flew-text { font-size: 18px; font-weight: 800; color: #ef4444; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; display: none; }
 
-        /* Betting Deck */
         .bet-deck { padding: 14px; display: flex; flex-direction: column; gap: 10px; background: #11141e; flex: 1; }
         .quick-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .chip-btn { background: #1a2030; border: 1px solid #28324a; color: #cbd5e1; padding: 8px 0; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; }
@@ -44,8 +40,8 @@
         .btn-launch { flex: 1.2; border: none; border-radius: 10px; font-size: 16px; font-weight: 900; text-transform: uppercase; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; transition: transform 0.05s ease; }
         .btn-launch:active { transform: scale(0.98); }
         .btn-bet { background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
-        .btn-cashout { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; box-shadow: 0 4px 15px rgba(245,158,11,0.4); animation: pulse 1s infinite alternate; }
-        .btn-wait { background: #1f2433; color: #64748b; cursor: not-allowed; }
+        .btn-cashout { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; box-shadow: 0 4px 15px rgba(245,158,11,0.4); animation: pulse 0.8s infinite alternate; }
+        .btn-wait { background: #1f2433; color: #f59e0b; cursor: pointer; }
 
         @keyframes pulse { from { filter: brightness(1); } to { filter: brightness(1.2); } }
     </style>
@@ -58,16 +54,8 @@
         <div class="wallet-pill" id="wallet-text">₹ 1,000.00</div>
     </div>
 
-    <!-- History ribbon -->
-    <div class="history-strip" id="history-strip">
-        <span class="hist-chip">1.24x</span>
-        <span class="hist-chip high">3.88x</span>
-        <span class="hist-chip">1.10x</span>
-        <span class="hist-chip super">12.50x</span>
-        <span class="hist-chip">2.01x</span>
-    </div>
+    <div class="history-strip" id="history-strip"></div>
 
-    <!-- Game Screen -->
     <div class="canvas-container">
         <canvas id="game-canvas"></canvas>
         <div class="overlay-center">
@@ -76,7 +64,6 @@
         </div>
     </div>
 
-    <!-- Bet Deck -->
     <div class="bet-deck">
         <div class="quick-chips">
             <button class="chip-btn" onclick="setBet(50)">+50</button>
@@ -110,7 +97,6 @@
     const walletText = document.getElementById('wallet-text');
     const betInput = document.getElementById('bet-input');
 
-    // High DPI Canvas Scaling
     function resizeCanvas() {
         canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
         canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
@@ -119,25 +105,6 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Sound FX using Web Audio API (No external sound files required)
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playBeep(freq, type = 'sine', duration = 0.1) {
-        try {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        } catch(e){}
-    }
-
-    // Shared Wallet Logic with localStorage
     let balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
     function updateWalletDisplay() {
         walletText.innerText = `₹ ${balance.toFixed(2)}`;
@@ -147,10 +114,10 @@
 
     let isFlying = false;
     let currentMult = 1.00;
-    let userState = 'IDLE'; // IDLE, BET_PLACED, CASHED_OUT
-    let myBetAmt = 50;
+    let betQueued = false;   // Agle round ke liye bet lagi hai
+    let activeInRound = false; // Is round mein actively bet chal rahi hai
+    let currentBetAmt = 50;
 
-    // Bet input sync
     betInput.addEventListener('input', () => {
         let val = Math.max(10, parseFloat(betInput.value) || 10);
         subBtnText.innerText = `₹${val.toFixed(2)}`;
@@ -158,18 +125,12 @@
     function setBet(amt) {
         betInput.value = amt;
         subBtnText.innerText = `₹${amt.toFixed(2)}`;
-        playBeep(400);
     }
     function adjustBet(delta) {
         let val = Math.max(10, (parseFloat(betInput.value) || 0) + delta);
         betInput.value = val;
         subBtnText.innerText = `₹${val.toFixed(2)}`;
-        playBeep(350);
     }
-
-    // --- CANVAS GRAPH ENGINE (Smooth Curved Flight) ---
-    let planeX = 40;
-    let planeY = 200;
 
     function drawGraph(mult) {
         const w = canvas.parentElement.clientWidth;
@@ -178,63 +139,69 @@
 
         if (!isFlying) return;
 
-        // Progress based on multiplier
-        let progress = Math.min((mult - 1) / 3, 1);
-        planeX = 30 + progress * (w - 90);
-        planeY = (h - 40) - Math.pow(progress, 0.85) * (h - 80);
+        let progress = Math.min((mult - 1) / 3.5, 1);
+        let planeX = 35 + progress * (w - 100);
+        let planeY = (h - 40) - Math.pow(progress, 0.8) * (h - 85);
 
-        // Gradient Trail underneath flight
+        // Gradient Trail
         ctx.beginPath();
         ctx.moveTo(30, h - 30);
         ctx.quadraticCurveTo(w * 0.35, h - 35, planeX, planeY);
         ctx.lineTo(planeX, h - 30);
         ctx.closePath();
         let fillGrad = ctx.createLinearGradient(0, 0, 0, h);
-        fillGrad.addColorStop(0, 'rgba(239, 68, 68, 0.3)');
+        fillGrad.addColorStop(0, 'rgba(239, 68, 68, 0.35)');
         fillGrad.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
         ctx.fillStyle = fillGrad;
         ctx.fill();
 
-        // Red Flight Path Line
+        // Path Line
         ctx.beginPath();
         ctx.moveTo(30, h - 30);
         ctx.quadraticCurveTo(w * 0.35, h - 35, planeX, planeY);
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = 4;
-        ctx.shadowColor = '#ef4444';
-        ctx.shadowBlur = 10;
         ctx.stroke();
-        ctx.shadowBlur = 0;
 
-        // Draw Sleek Jet (Vector)
+        // Vector Jet
         ctx.save();
         ctx.translate(planeX, planeY);
-        ctx.rotate(-0.15);
-        ctx.fillStyle = '#f87171';
+        ctx.rotate(-0.12);
+        ctx.fillStyle = '#ef4444';
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(-24, 6);
+        ctx.lineTo(-24, 7);
         ctx.lineTo(-18, 0);
-        ctx.lineTo(-26, -4);
+        ctx.lineTo(-26, -5);
         ctx.closePath();
         ctx.fill();
         ctx.restore();
     }
 
-    // --- SOCKET HANDLERS ---
+    // --- SOCKET EVENTS ---
     socket.on('aviator_tick', (mult) => {
-        isFlying = true;
+        // Naya round shuru hua
+        if (!isFlying) {
+            isFlying = true;
+            flewMsg.style.display = 'none';
+
+            // Agar bet queue mein thi, toh ab activate karo!
+            if (betQueued) {
+                betQueued = false;
+                activeInRound = true;
+            }
+        }
+
         currentMult = mult;
-        flewMsg.style.display = 'none';
         multDisplay.innerText = mult.toFixed(2) + 'x';
         multDisplay.style.color = '#fff';
-
         drawGraph(mult);
 
-        if (userState === 'BET_PLACED') {
-            let cashoutAmt = (myBetAmt * mult).toFixed(2);
+        // Agar user ka bet chal raha hai -> CASHOUT BUTTON DIKHAO
+        if (activeInRound) {
+            let cashoutAmt = (currentBetAmt * mult).toFixed(2);
             mainBtn.className = 'btn-launch btn-cashout';
-            mainBtn.innerHTML = `<span>CASHOUT</span><span style="font-size:12px; font-weight:800;">₹${cashoutAmt}</span>`;
+            mainBtn.innerHTML = `<span>CASHOUT</span><span style="font-size:13px; font-weight:800;">₹${cashoutAmt}</span>`;
         }
     });
 
@@ -243,47 +210,66 @@
         multDisplay.innerText = finalMult.toFixed(2) + 'x';
         multDisplay.style.color = '#ef4444';
         flewMsg.style.display = 'block';
-        playBeep(180, 'sawtooth', 0.25);
 
-        // Add to history ribbon
         const chip = document.createElement('span');
         chip.className = `hist-chip ${finalMult >= 10 ? 'super' : finalMult >= 2 ? 'high' : ''}`;
         chip.innerText = finalMult.toFixed(2) + 'x';
         document.getElementById('history-strip').prepend(chip);
 
-        if (userState === 'BET_PLACED') {
-            userState = 'IDLE';
-        }
+        // Round khatam, bet reset
+        activeInRound = false;
 
-        setTimeout(() => {
-            userState = 'IDLE';
+        if (betQueued) {
+            mainBtn.className = 'btn-launch btn-wait';
+            mainBtn.innerHTML = `<span>STARTING SOON...</span>`;
+        } else {
             mainBtn.className = 'btn-launch btn-bet';
-            mainBtn.innerHTML = `<span>BET</span><span style="font-size:11px; opacity:0.8;" id="sub-btn-text">₹${betInput.value}.00</span>`;
-        }, 1200);
+            mainBtn.innerHTML = `<span>BET</span><span style="font-size:11px; opacity:0.8;">₹${betInput.value}.00</span>`;
+        }
     });
 
     function handleBetClick() {
-        if (userState === 'IDLE' && !isFlying) {
-            myBetAmt = parseFloat(betInput.value) || 50;
-            if (myBetAmt > balance) return alert('Low Balance! Please recharge.');
-
-            balance -= myBetAmt;
-            updateWalletDisplay();
-            userState = 'BET_PLACED';
-            playBeep(600);
-
-            mainBtn.className = 'btn-launch btn-wait';
-            mainBtn.innerHTML = `<span>WAITING...</span>`;
-        } else if (userState === 'BET_PLACED' && isFlying) {
-            // Cashout
-            let winAmt = parseFloat((myBetAmt * currentMult).toFixed(2));
+        // 1. Agar flight ke dauran cashout daba raha hai
+        if (activeInRound && isFlying) {
+            let winAmt = parseFloat((currentBetAmt * currentMult).toFixed(2));
             balance += winAmt;
             updateWalletDisplay();
-            userState = 'CASHED_OUT';
-            playBeep(880, 'triangle', 0.3);
+            activeInRound = false;
 
             mainBtn.className = 'btn-launch btn-wait';
-            mainBtn.innerHTML = `<span>WON ₹${winAmt.toFixed(2)}</span>`;
+            mainBtn.innerHTML = `<span>WON ₹${winAmt.toFixed(2)}!</span>`;
+            return;
+        }
+
+        // 2. Agar bet cancel karni ho (round shuru hone se pehle)
+        if (betQueued) {
+            balance += currentBetAmt;
+            updateWalletDisplay();
+            betQueued = false;
+
+            mainBtn.className = 'btn-launch btn-bet';
+            mainBtn.innerHTML = `<span>BET</span><span style="font-size:11px; opacity:0.8;">₹${betInput.value}.00</span>`;
+            return;
+        }
+
+        // 3. Nayi Bet lagana
+        let amt = parseFloat(betInput.value) || 50;
+        if (amt > balance) return alert('Balance kam hai!');
+
+        balance -= amt;
+        updateWalletDisplay();
+        currentBetAmt = amt;
+
+        if (isFlying) {
+            // Flight chal rahi hai -> agle round ke liye queue kar do
+            betQueued = true;
+            mainBtn.className = 'btn-launch btn-wait';
+            mainBtn.innerHTML = `<span>WAIT FOR NEXT ROUND</span><span style="font-size:10px;">(Click to cancel)</span>`;
+        } else {
+            // Plane abhi grounded hai -> turant ready
+            betQueued = true;
+            mainBtn.className = 'btn-launch btn-wait';
+            mainBtn.innerHTML = `<span>BET PLACED</span><span style="font-size:10px;">(Starting...)</span>`;
         }
     }
 </script>
