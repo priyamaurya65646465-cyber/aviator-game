@@ -8,10 +8,14 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
         body { background: #1a1a24; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
         .app-container { width: 100%; max-width: 450px; background: #12121a; min-height: 100vh; padding-bottom: 75px; position: relative; }
+        
+        /* Top Navigation Header */
         .top-header { background: #222232; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2d42; position: sticky; top: 0; z-index: 100; }
         .logo { font-size: 20px; font-weight: 900; background: linear-gradient(135deg, #f5d061, #e6a119); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; letter-spacing: 1px; }
         .header-actions { display: flex; gap: 8px; align-items: center; }
         .btn-deposit { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #000; font-weight: 700; padding: 6px 14px; border-radius: 20px; border: none; font-size: 13px; cursor: pointer; }
+        
+        /* Golden Balance Card */
         .wallet-card { margin: 14px; background: linear-gradient(135deg, #2c2140, #1c1829); border: 1px solid #432e65; border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
         .wallet-title { font-size: 12px; color: #9c9cb8; text-transform: uppercase; letter-spacing: 0.5px; }
         .wallet-amount { font-size: 28px; font-weight: 800; color: #ffd700; margin: 6px 0 14px 0; }
@@ -19,13 +23,20 @@
         .btn-w-action { padding: 9px 0; border-radius: 8px; font-weight: 600; font-size: 13px; border: none; cursor: pointer; text-align: center; text-decoration: none; }
         .btn-pay { background: #00c988; color: #fff; }
         .btn-withdraw { background: #33334d; color: #ddd; }
+        
+        /* Winning Ticker Banner */
         .notice-bar { margin: 0 14px 14px 14px; background: #1c1c2b; padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #c4c4dc; }
         .ticker-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f1c40f; }
+        
+        /* Game Categories */
         .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 0 14px 12px 14px; scrollbar-width: none; }
         .category-scroll::-webkit-scrollbar { display: none; }
         .cat-chip { padding: 8px 16px; border-radius: 20px; background: #222232; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; border: 1px solid #2d2d42; color: #a5a5c7; }
         .cat-chip.active { background: linear-gradient(135deg, #d4af37, #b8860b); color: #000; border-color: #ffd700; }
+        
         .section-title { font-size: 15px; font-weight: 700; color: #f1f2f6; margin: 10px 14px 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* 2-Column Game Cards Grid */
         .games-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 14px 16px 14px; }
         .game-card { background: #1e1e2d; border-radius: 12px; overflow: hidden; text-decoration: none; color: #fff; border: 1px solid #2e2e44; display: flex; flex-direction: column; transition: transform 0.15s ease; position: relative; }
         .game-card:active { transform: scale(0.97); }
@@ -36,9 +47,12 @@
         .thumb-dvt { background: linear-gradient(135deg, #f368e0, #8854d0); }
         .thumb-k3 { background: linear-gradient(135deg, #ff9f43, #ee5253); }
         .thumb-slots { background: linear-gradient(135deg, #feca57, #ff9f43); }
+        
         .game-info { padding: 10px 12px; background: #191926; }
         .game-name { font-size: 14px; font-weight: 700; }
         .game-tag { font-size: 11px; color: #00c988; margin-top: 2px; }
+        
+        /* Bottom Tab Navigation */
         .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 450px; background: #181824; border-top: 1px solid #28283c; display: flex; justify-content: space-around; padding: 8px 0; z-index: 100; }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #7f7f9e; text-decoration: none; font-size: 11px; font-weight: 500; gap: 3px; cursor: pointer; }
         .nav-item.active { color: #f1c40f; }
@@ -51,17 +65,17 @@
     <div class="top-header">
         <div class="logo">BIG DADDY</div>
         <div class="header-actions">
-            <a href="/admin" class="btn-deposit" style="background:#3d3d5c; color:#fff; text-decoration:none;">Admin</a>
-            <button class="btn-deposit" onclick="alert('Deposit window opening...')">Deposit</button>
+            <button class="btn-deposit" onclick="alert('Recharge options opening...')">Deposit</button>
         </div>
     </div>
 
+    <!-- Real Synchronized Wallet -->
     <div class="wallet-card">
         <div class="wallet-title">Total Balance</div>
-        <div class="wallet-amount">₹ 1,000.00</div>
+        <div class="wallet-amount" id="lobby-balance">₹ 1,000.00</div>
         <div class="wallet-buttons">
-            <button class="btn-w-action btn-pay" onclick="alert('Add Cash')">+ Add Cash</button>
-            <button class="btn-w-action btn-withdraw" onclick="alert('Minimum withdrawal ₹110')">Withdraw</button>
+            <button class="btn-w-action btn-pay" onclick="quickAddCash()">+ Add Cash</button>
+            <button class="btn-w-action btn-withdraw" onclick="alert('Minimum withdrawal is ₹110.00')">Withdraw</button>
         </div>
     </div>
 
@@ -84,7 +98,7 @@
     </div>
 
     <div class="games-grid">
-        <!-- 1. Win Go -->
+        <!-- 1. Win Go 1Min -->
         <a href="/wingo.html" class="game-card">
             <div class="game-thumb thumb-wingo">🎨</div>
             <div class="game-info">
@@ -93,7 +107,7 @@
             </div>
         </a>
 
-        <!-- 2. Aviator -->
+        <!-- 2. Aviator Crash -->
         <a href="/aviator.html" class="game-card">
             <div class="game-thumb thumb-aviator">✈️</div>
             <div class="game-info">
@@ -102,7 +116,7 @@
             </div>
         </a>
 
-        <!-- 3. Mines -->
+        <!-- 3. Mines Pro -->
         <a href="/mines.html" class="game-card">
             <div class="game-thumb thumb-mines">💣</div>
             <div class="game-info">
@@ -112,16 +126,16 @@
         </a>
 
         <!-- 4. Dragon vs Tiger -->
-        <div class="game-card" onclick="alert('Dragon vs Tiger opening soon!')">
+        <a href="/dvt.html" class="game-card">
             <div class="game-thumb thumb-dvt">🐉</div>
             <div class="game-info">
                 <div class="game-name">Dragon vs Tiger</div>
                 <div class="game-tag">2-Cards Fast Casino</div>
             </div>
-        </div>
+        </a>
 
-        <!-- 5. K3 Dice -->
-        <div class="game-card" onclick="alert('K3 opening soon!')">
+        <!-- 5. K3 Dice (Coming Soon) -->
+        <div class="game-card" onclick="alert('K3 Dice opening soon!')">
             <div class="game-thumb thumb-k3">🎲</div>
             <div class="game-info">
                 <div class="game-name">K3 1Min</div>
@@ -129,8 +143,8 @@
             </div>
         </div>
 
-        <!-- 6. Super Ace -->
-        <div class="game-card" onclick="alert('Super Ace opening soon!')">
+        <!-- 6. Super Ace Slots (Coming Soon) -->
+        <div class="game-card" onclick="alert('Super Ace Slots opening soon!')">
             <div class="game-thumb thumb-slots">👑</div>
             <div class="game-info">
                 <div class="game-name">Super Ace</div>
@@ -139,24 +153,25 @@
         </div>
     </div>
 
+    <!-- Bottom Navigation -->
     <div class="bottom-nav">
         <div class="nav-item active">
             <span class="nav-icon">🏠</span>
             <span>Home</span>
         </div>
-        <div class="nav-item" onclick="alert('Activity')">
+        <div class="nav-item" onclick="alert('Activity Bonus')">
             <span class="nav-icon">🎁</span>
             <span>Activity</span>
         </div>
-        <div class="nav-item" onclick="alert('Promotion')">
+        <div class="nav-item" onclick="alert('Promotion Commission: 0.6%')">
             <span class="nav-icon">👥</span>
             <span>Promotion</span>
         </div>
-        <div class="nav-item" onclick="alert('Wallet')">
+        <div class="nav-item" onclick="alert('Wallet Management')">
             <span class="nav-icon">💳</span>
             <span>Wallet</span>
         </div>
-        <div class="nav-item" onclick="alert('Account')">
+        <div class="nav-item" onclick="alert('Account Profile')">
             <span class="nav-icon">👤</span>
             <span>Account</span>
         </div>
@@ -164,17 +179,40 @@
 </div>
 
 <script>
+    // Wallet Sync with all 4 games
+    let balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
+    const lobbyBalance = document.getElementById('lobby-balance');
+
+    function syncWallet() {
+        balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
+        lobbyBalance.innerText = `₹ ${balance.toFixed(2)}`;
+    }
+    syncWallet();
+
+    // Quick Test Deposit
+    function quickAddCash() {
+        let add = prompt("Enter amount to add (Test Demo):", "500");
+        if(add && !isNaN(add) && parseFloat(add) > 0) {
+            balance += parseFloat(add);
+            localStorage.setItem('bdg_balance', balance);
+            syncWallet();
+            alert(`₹${parseFloat(add).toFixed(2)} added to wallet successfully!`);
+        }
+    }
+
+    // Live Winner Ticker Loop
     const dummyWinners = [
         "User 91***34 won ₹1,200 in Wingo!",
         "User 78***11 won ₹8,400 in Aviator!",
         "User 99***82 won ₹550 in Mines!",
-        "User 80***45 won ₹2,000 in Dragon vs Tiger!"
+        "User 80***45 won ₹2,000 in Dragon vs Tiger!",
+        "User 94***02 won ₹12,600 in Aviator!"
     ];
     let tickerIdx = 0;
     setInterval(() => {
         tickerIdx = (tickerIdx + 1) % dummyWinners.length;
         document.getElementById('ticker-text').innerText = dummyWinners[tickerIdx];
-    }, 3000);
+    }, 2800);
 </script>
 </body>
 </html>
