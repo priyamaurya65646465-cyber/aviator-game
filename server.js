@@ -11,15 +11,54 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Static files serve karein
+// Static folder serve
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Root route Render health check ke liye
+// ---------------- PAGE ROUTES ----------------
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Render ping route
+// Games Routes
+app.get('/wingo', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'wingo.html'));
+});
+
+app.get('/aviator', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'aviator.html'));
+});
+
+app.get('/mines', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'mines.html'));
+});
+
+app.get('/dragontiger', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dvt.html'));
+});
+
+app.get('/dvt', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dvt.html'));
+});
+
+// User & Transaction Routes
+app.get('/deposit', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'deposit.html'));
+});
+
+app.get('/withdraw', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'withdraw.html'));
+});
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Admin Route (Hidden link)
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Health check ping
 app.get('/healthz', (req, res) => {
     res.status(200).send('OK');
 });
@@ -141,7 +180,7 @@ function resolveWingoRound() {
     wingoTimer = 60;
 }
 
-// 60-second timer
+// Timer
 setInterval(() => {
     wingoTimer--;
 
@@ -156,7 +195,7 @@ setInterval(() => {
     }
 }, 1000);
 
-// ---------------- SOCKET COMMUNICATION ----------------
+// ---------------- SOCKET EVENTS ----------------
 io.on('connection', (socket) => {
     socket.emit('wingo_init', {
         timer: wingoTimer,
@@ -190,7 +229,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Port and Host binding for Render
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on port ${PORT}`);
