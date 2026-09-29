@@ -3,240 +3,464 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Big Daddy Game - Official Lobby</title>
+    <title>Tiranga Club</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { background: #1a1a24; color: #fff; display: flex; justify-content: center; min-height: 100vh; }
-        .app-container { width: 100%; max-width: 450px; background: #12121a; min-height: 100vh; padding-bottom: 75px; position: relative; }
-        
-        /* Top Navigation Header */
-        .top-header { background: #222232; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2d42; position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 20px; font-weight: 900; background: linear-gradient(135deg, #f5d061, #e6a119); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; letter-spacing: 1px; }
-        .header-actions { display: flex; gap: 8px; align-items: center; }
-        .btn-admin { color: #f59e0b; text-decoration: none; font-size: 12px; font-weight: 800; border: 1px solid #f59e0b; padding: 5px 10px; border-radius: 16px; }
-        .btn-deposit { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #000; font-weight: 800; padding: 6px 14px; border-radius: 20px; border: none; font-size: 13px; text-decoration: none; display: inline-block; cursor: pointer; }
-        
-        /* User Bar */
-        .user-strip { background: #171724; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; border-bottom: 1px solid #232336; }
-        .user-id { color: #8a99ad; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-        .btn-logout { background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; font-size: 12px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-        /* Golden Balance Card */
-        .wallet-card { margin: 12px 14px 14px 14px; background: linear-gradient(135deg, #2c2140, #1c1829); border: 1px solid #432e65; border-radius: 14px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-        .wallet-title { font-size: 12px; color: #9c9cb8; text-transform: uppercase; letter-spacing: 0.5px; }
-        .wallet-amount { font-size: 28px; font-weight: 800; color: #ffd700; margin: 6px 0 14px 0; }
-        .wallet-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-w-action { padding: 10px 0; border-radius: 8px; font-weight: 700; font-size: 13px; border: none; cursor: pointer; text-align: center; text-decoration: none; display: block; }
-        .btn-pay { background: #00c988; color: #fff; }
-        .btn-withdraw { background: #33334d; color: #ffd700; border: 1px solid #4d4d73; }
-        
-        /* Winning Ticker Banner */
-        .notice-bar { margin: 0 14px 14px 14px; background: #1c1c2b; padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #c4c4dc; }
-        .ticker-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f1c40f; }
-        
-        /* Game Categories */
-        .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 0 14px 12px 14px; scrollbar-width: none; }
-        .category-scroll::-webkit-scrollbar { display: none; }
-        .cat-chip { padding: 8px 16px; border-radius: 20px; background: #222232; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; border: 1px solid #2d2d42; color: #a5a5c7; }
-        .cat-chip.active { background: linear-gradient(135deg, #d4af37, #b8860b); color: #000; border-color: #ffd700; }
-        
-        .section-title { font-size: 15px; font-weight: 700; color: #f1f2f6; margin: 10px 14px 10px 14px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* 2-Column Game Cards Grid */
-        .games-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 14px 16px 14px; }
-        .game-card { background: #1e1e2d; border-radius: 12px; overflow: hidden; text-decoration: none; color: #fff; border: 1px solid #2e2e44; display: flex; flex-direction: column; transition: transform 0.15s ease; position: relative; }
-        .game-card:active { transform: scale(0.97); }
-        .game-thumb { height: 100px; display: flex; align-items: center; justify-content: center; font-size: 38px; position: relative; }
-        .thumb-wingo { background: linear-gradient(135deg, #ff4757, #9b51e0, #00c988); }
-        .thumb-aviator { background: linear-gradient(135deg, #e81123, #2d0006); }
-        .thumb-mines { background: linear-gradient(135deg, #2e86de, #1e3799); }
-        .thumb-dvt { background: linear-gradient(135deg, #f368e0, #8854d0); }
-        .thumb-k3 { background: linear-gradient(135deg, #ff9f43, #ee5253); }
-        .thumb-slots { background: linear-gradient(135deg, #feca57, #ff9f43); }
-        
-        .game-info { padding: 10px 12px; background: #191926; }
-        .game-name { font-size: 14px; font-weight: 700; }
-        .game-tag { font-size: 11px; color: #00c988; margin-top: 2px; }
-        
-        /* Bottom Tab Navigation */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 450px; background: #181824; border-top: 1px solid #28283c; display: flex; justify-content: space-around; padding: 8px 0; z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #7f7f9e; text-decoration: none; font-size: 11px; font-weight: 500; gap: 3px; cursor: pointer; }
-        .nav-item.active { color: #f1c40f; }
-        .nav-icon { font-size: 18px; }
+        body {
+            background-color: #0c0f1d;
+            display: flex;
+            justify-content: center;
+            color: #ffffff;
+        }
+
+        /* Mobile App Frame */
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background-color: #131a38;
+            min-height: 100vh;
+            padding-bottom: 95px;
+            position: relative;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Top Header */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: #1b2349;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 800;
+            font-style: italic;
+            letter-spacing: 0.5px;
+            color: #00d2ff;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-deposit {
+            background: linear-gradient(90deg, #f7b733, #fc4a1a);
+            color: #fff;
+            border: none;
+            padding: 7px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(252, 74, 26, 0.4);
+        }
+
+        /* Notice / Marquee Bar */
+        .notice-bar {
+            display: flex;
+            align-items: center;
+            background: #101630;
+            padding: 9px 14px;
+            font-size: 12px;
+            color: #8c9ac9;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .notice-icon {
+            font-size: 14px;
+        }
+
+        .notice-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .notice-btn {
+            background: #2b70f0;
+            color: #fff;
+            border: none;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Category Filter Tabs */
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 12px 14px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .category-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-item {
+            background: #1e264f;
+            border: 1px solid #283363;
+            color: #8c9ac9;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-item.active {
+            background: #2b70f0;
+            color: #ffffff;
+            border-color: #4b88ff;
+            box-shadow: 0 4px 12px rgba(43, 112, 240, 0.35);
+        }
+
+        /* Section Headings */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 14px 8px 14px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .section-title::before {
+            content: "";
+            width: 4px;
+            height: 15px;
+            background: #2b70f0;
+            border-radius: 2px;
+        }
+
+        .see-all {
+            font-size: 12px;
+            color: #7b8ab8;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* Grid System */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 6px 14px 14px 14px;
+        }
+
+        .game-card {
+            background: #1b2349;
+            border: 1px solid #263162;
+            border-radius: 14px;
+            padding: 14px 8px 10px 8px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 115px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.15s ease;
+        }
+
+        .game-card:active {
+            transform: scale(0.96);
+        }
+
+        .game-card .card-icon {
+            font-size: 34px;
+            margin-bottom: 6px;
+        }
+
+        .game-card .game-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .game-card .game-tag {
+            font-size: 10px;
+            color: #7b8ab8;
+            margin-top: 2px;
+        }
+
+        /* Aviator Highlight Card */
+        .game-card.aviator-highlight {
+            background: linear-gradient(145deg, #4d0a15 0%, #1b2349 100%);
+            border: 1px solid #ff4d4f;
+        }
+
+        .game-card.aviator-highlight .game-title {
+            color: #ff4d4f;
+        }
+
+        /* Live Winning Marquee Ticker */
+        .winner-ticker {
+            margin: 10px 14px;
+            background: #161e3f;
+            border: 1px solid #242f60;
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .winner-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .winner-amount {
+            color: #00e676;
+            font-weight: 700;
+        }
+
+        /* Bottom Floating Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 480px;
+            background: #161d3d;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 0 6px 0;
+            border-top: 1px solid #232c54;
+            z-index: 100;
+        }
+
+        .nav-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #7280aa;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+            gap: 3px;
+            flex: 1;
+        }
+
+        .nav-link.active {
+            color: #2b70f0;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        /* Center Floating Spin Button */
+        .center-spin-wrapper {
+            position: relative;
+            top: -16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            flex: 1;
+        }
+
+        .spin-wheel {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #ff9900, #ff3b30);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            box-shadow: 0 4px 14px rgba(255, 59, 48, 0.55);
+            border: 3px solid #161d3d;
+        }
+
+        .spin-tag {
+            background: #ff3b30;
+            color: #ffffff;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 10px;
+            margin-top: 3px;
+        }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <!-- Top Header -->
-    <div class="top-header">
-        <div class="logo">BIG DADDY</div>
-        <div class="header-actions">
-            <a href="/admin" class="btn-admin">⚙️ Admin</a>
-            <a href="/deposit.html" class="btn-deposit">Deposit</a>
-        </div>
-    </div>
+    <div class="app-container">
 
-    <!-- Active User & Logout Bar -->
-    <div class="user-strip">
-        <div class="user-id">
-            <span>👤</span>
-            <span id="user-display">+91 **********</span>
-        </div>
-        <button class="btn-logout" onclick="logoutUser()">LOGOUT</button>
-    </div>
-
-    <!-- Real Synchronized Wallet -->
-    <div class="wallet-card">
-        <div class="wallet-title">Total Balance</div>
-        <div class="wallet-amount" id="lobby-balance">₹ 1,000.00</div>
-        <div class="wallet-buttons">
-            <a href="/deposit.html" class="btn-w-action btn-pay">+ Add Cash</a>
-            <a href="/withdraw.html" class="btn-w-action btn-withdraw">Withdraw</a>
-        </div>
-    </div>
-
-    <div class="notice-bar">
-        <span>📢</span>
-        <div class="ticker-text" id="ticker-text">User 98***21 won ₹4,500 in Wingo 1Min!</div>
-    </div>
-
-    <div class="category-scroll">
-        <div class="cat-chip active">All Games</div>
-        <div class="cat-chip">Lottery</div>
-        <div class="cat-chip">Original</div>
-        <div class="cat-chip">Casino</div>
-        <div class="cat-chip">Slots</div>
-    </div>
-
-    <div class="section-title">
-        <span>Popular Games</span>
-        <span style="font-size:12px; color:#d4af37;">Explore All</span>
-    </div>
-
-    <div class="games-grid">
-        <!-- 1. Win Go 1Min -->
-        <a href="/wingo.html" class="game-card">
-            <div class="game-thumb thumb-wingo">🎨</div>
-            <div class="game-info">
-                <div class="game-name">Win Go 1Min</div>
-                <div class="game-tag">Guess Green / Red</div>
+        <!-- Header (Sirf Deposit Button Hai, Admin Hata Diya Hai) -->
+        <header class="top-header">
+            <div class="logo">TIRANGA</div>
+            <div class="header-actions">
+                <button class="btn-deposit" onclick="openDepositModal()">Deposit</button>
             </div>
-        </a>
+        </header>
 
-        <!-- 2. Aviator Crash -->
-        <a href="/aviator.html" class="game-card">
-            <div class="game-thumb thumb-aviator">✈️</div>
-            <div class="game-info">
-                <div class="game-name">Aviator Crash</div>
-                <div class="game-tag">Up to 100x Multiplier</div>
-            </div>
-        </a>
-
-        <!-- 3. Mines Pro -->
-        <a href="/mines.html" class="game-card">
-            <div class="game-thumb thumb-mines">💣</div>
-            <div class="game-info">
-                <div class="game-name">Mines</div>
-                <div class="game-tag">Find Gems & Cashout</div>
-            </div>
-        </a>
-
-        <!-- 4. Dragon vs Tiger -->
-        <a href="/dvt.html" class="game-card">
-            <div class="game-thumb thumb-dvt">🐉</div>
-            <div class="game-info">
-                <div class="game-name">Dragon vs Tiger</div>
-                <div class="game-tag">2-Cards Fast Casino</div>
-            </div>
-        </a>
-
-        <!-- 5. K3 Dice (Coming Soon) -->
-        <div class="game-card" onclick="alert('K3 Dice opening soon!')">
-            <div class="game-thumb thumb-k3">🎲</div>
-            <div class="game-info">
-                <div class="game-name">K3 1Min</div>
-                <div class="game-tag">Sum & Dice Odds</div>
-            </div>
+        <!-- Notification Bar -->
+        <div class="notice-bar">
+            <span class="notice-icon">📢</span>
+            <div class="notice-text">Welcome to Tiranga Games! Secure deposits, lightning withdrawals, and 24/7 service.</div>
+            <button class="notice-btn">Detail</button>
         </div>
 
-        <!-- 6. Super Ace Slots (Coming Soon) -->
-        <div class="game-card" onclick="alert('Super Ace Slots opening soon!')">
-            <div class="game-thumb thumb-slots">👑</div>
-            <div class="game-info">
-                <div class="game-name">Super Ace</div>
-                <div class="game-tag">Golden Card Slots</div>
-            </div>
+        <!-- Category Filter Tabs -->
+        <div class="category-tabs">
+            <div class="tab-item active">Popular</div>
+            <div class="tab-item">Lottery</div>
+            <div class="tab-item">Original</div>
+            <div class="tab-item">Casino</div>
+            <div class="tab-item">Slots</div>
+            <div class="tab-item">Sports</div>
         </div>
+
+        <!-- Live Winning Social Banner -->
+        <div class="winner-ticker">
+            <div class="winner-info">
+                <span>🔥</span>
+                <span>User <b>Mem***942</b> Won</span>
+            </div>
+            <div class="winner-amount">+ ₹1,480.00</div>
+        </div>
+
+        <!-- Section: Lottery -->
+        <div class="section-header">
+            <div class="section-title">Lottery</div>
+            <span class="see-all">All ></span>
+        </div>
+        <div class="games-grid">
+            <a href="/wingo" class="game-card">
+                <div class="card-icon">🔴</div>
+                <div class="game-title">Win Go 1M</div>
+                <div class="game-tag">Green / Red</div>
+            </a>
+            <a href="/k3" class="game-card">
+                <div class="card-icon">🎲</div>
+                <div class="game-title">K3 1Min</div>
+                <div class="game-tag">Dice Odds</div>
+            </a>
+            <a href="/5d" class="game-card">
+                <div class="card-icon">🔢</div>
+                <div class="game-title">5D Lottery</div>
+                <div class="game-tag">Number Hash</div>
+            </a>
+        </div>
+
+        <!-- Section: Original Games -->
+        <div class="section-header">
+            <div class="section-title">Original</div>
+            <span class="see-all">All 137 ></span>
+        </div>
+        <div class="games-grid">
+            <a href="/aviator" class="game-card aviator-highlight">
+                <div class="card-icon">✈️</div>
+                <div class="game-title">Aviator</div>
+                <div class="game-tag" style="color: #ff9999;">Up to 100x</div>
+            </a>
+            <a href="/mines" class="game-card">
+                <div class="card-icon">💣</div>
+                <div class="game-title">Mines</div>
+                <div class="game-tag">Find Gems</div>
+            </a>
+            <a href="/limbo" class="game-card">
+                <div class="card-icon">🚀</div>
+                <div class="game-title">Limbo</div>
+                <div class="game-tag">Target Rocket</div>
+            </a>
+        </div>
+
+        <!-- Section: Casino & Tables -->
+        <div class="section-header">
+            <div class="section-title">Casino & Tables</div>
+            <span class="see-all">All ></span>
+        </div>
+        <div class="games-grid">
+            <a href="/dragontiger" class="game-card">
+                <div class="card-icon">🐉</div>
+                <div class="game-title">Dragon Tiger</div>
+                <div class="game-tag">2-Cards Fast</div>
+            </a>
+            <a href="/roulette" class="game-card">
+                <div class="card-icon">🎡</div>
+                <div class="game-title">Roulette</div>
+                <div class="game-tag">Live Table</div>
+            </a>
+            <a href="/andarbahar" class="game-card">
+                <div class="card-icon">🃏</div>
+                <div class="game-title">Andar Bahar</div>
+                <div class="game-tag">Classic Card</div>
+            </a>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <a href="/" class="nav-link active">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+            </a>
+            <a href="/activity" class="nav-link">
+                <span class="nav-icon">🎁</span>
+                <span>Activity</span>
+            </a>
+            <a href="/spin" class="center-spin-wrapper">
+                <div class="spin-wheel">🎯</div>
+                <div class="spin-tag">Get ₹500</div>
+            </a>
+            <a href="/promotion" class="nav-link">
+                <span class="nav-icon">📢</span>
+                <span>Promotion</span>
+            </a>
+            <a href="/account" class="nav-link">
+                <span class="nav-icon">👤</span>
+                <span>Account</span>
+            </a>
+        </nav>
+
     </div>
 
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <div class="nav-item active">
-            <span class="nav-icon">🏠</span>
-            <span>Home</span>
-        </div>
-        <div class="nav-item" onclick="alert('Activity Bonus: Daily Reward ₹50 Claimed!')">
-            <span class="nav-icon">🎁</span>
-            <span>Activity</span>
-        </div>
-        <div class="nav-item" onclick="alert('Invite link copied! Earn 0.6% commission.')">
-            <span class="nav-icon">👥</span>
-            <span>Promotion</span>
-        </div>
-        <div class="nav-item" onclick="window.location.href='/withdraw.html'">
-            <span class="nav-icon">💳</span>
-            <span>Wallet</span>
-        </div>
-        <div class="nav-item" onclick="logoutUser()">
-            <span class="nav-icon">👤</span>
-            <span>Account</span>
-        </div>
-    </div>
-</div>
-
-<script>
-    // 1. Session Auth Protection
-    const authUser = localStorage.getItem('bdg_auth_user');
-    if (!authUser) {
-        window.location.href = '/login.html';
-    } else {
-        const masked = authUser.length === 10 ? `${authUser.slice(0, 3)}****${authUser.slice(7)}` : authUser;
-        document.getElementById('user-display').innerText = `+91 ${masked}`;
-    }
-
-    function logoutUser() {
-        if (confirm("Kya aap Logout karna chahte hain?")) {
-            localStorage.removeItem('bdg_auth_user');
-            window.location.href = '/login.html';
+    <script>
+        function openDepositModal() {
+            if (typeof showDeposit === "function") {
+                showDeposit();
+            } else {
+                window.location.href = "/recharge";
+            }
         }
-    }
-
-    // 2. Universal Wallet Synchronization
-    let balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
-    const lobbyBalance = document.getElementById('lobby-balance');
-
-    function syncWallet() {
-        balance = parseFloat(localStorage.getItem('bdg_balance')) || 1000.00;
-        lobbyBalance.innerText = `₹ ${balance.toFixed(2)}`;
-    }
-    syncWallet();
-
-    window.addEventListener('focus', syncWallet);
-
-    // 3. Live Winner Ticker
-    const dummyWinners = [
-        "User 91***34 won ₹1,200 in Wingo!",
-        "User 78***11 won ₹8,400 in Aviator!",
-        "User 99***82 won ₹550 in Mines!",
-        "User 80***45 won ₹2,000 in Dragon vs Tiger!",
-        "User 94***02 won ₹12,600 in Aviator!"
-    ];
-    let tickerIdx = 0;
-    setInterval(() => {
-        tickerIdx = (tickerIdx + 1) % dummyWinners.length;
-        document.getElementById('ticker-text').innerText = dummyWinners[tickerIdx];
-    }, 2800);
-</script>
+    </script>
 </body>
 </html>
