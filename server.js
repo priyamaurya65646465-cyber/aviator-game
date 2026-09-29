@@ -1,262 +1,197 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const cors = require('cors');
 const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: { origin: "*" }
-});
+const io = new Server(server, { cors: { origin: '*' } });
 
-const PORT = process.env.PORT || 3000;
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
 
-// Body Parsers & Static Files
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Static files serve karein
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ==========================================
-// 1. ADMIN OVERRIDE & WITHDRAWAL DATA STORE
-// ==========================================
-let manualAviatorCrash = null; // Admin forced multiplier
-let manualWingoNumber = null;  // Admin forced number (0-9)
-let withdrawals = [];          // Centralized memory store for withdrawal requests
-
-// Admin: Set Aviator Crash Multiplier
-app.post('/api/admin/set-aviator', (req, res) => {
-    const { crashPoint } = req.body;
-    if (crashPoint && !isNaN(crashPoint) && parseFloat(crashPoint) >= 1.01) {
-        manualAviatorCrash = parseFloat(crashPoint);
-        console.log(`[Admin Control] Next Aviator crash forced to: ${manualAviatorCrash}x`);
-        return res.json({ success: true, message: `Next Aviator crash set to ${manualAviatorCrash}x` });
-    }
-    res.status(400).json({ success: false, message: 'Invalid multiplier (minimum 1.01)' });
-});
-
-// Admin: Set Win Go Winning Number
-app.post('/api/admin/set-wingo', (req, res) => {
-    const { number } = req.body;
-    if (number !== undefined && !isNaN(number) && parseInt(number) >= 0 && parseInt(number) <= 9) {
-        manualWingoNumber = parseInt(number);
-        console.log(`[Admin Control] Next Win Go number forced to: ${manualWingoNumber}`);
-        return res.json({ success: true, message: `Next Win Go number set to ${manualWingoNumber}` });
-    }
-    res.status(400).json({ success: false, message: 'Number must be between 0 and 9' });
-});
-
-// Admin: Get Current Live System Status
-app.get('/api/admin/status', (req, res) => {
-    res.json({
-        nextAviatorOverride: manualAviatorCrash,
-        nextWingoOverride: manualWingoNumber,
-        currentAviatorMult: aviatorMult,
-        wingoTimer: wingoTimer,
-        currentPeriod: periodNumber.toString()
-    });
-});
-
-// ==========================================
-// 2. WITHDRAWAL APIS (User & Admin Handshake)
-// ==========================================
-
-// User places a new withdrawal request
-app.post('/api/withdraw/request', (req, res) => {
-    const { phone, amount, type, details } = req.body;
-    if (!phone || !amount || parseFloat(amount) < 110) {
-        return res.status(400).json({ success: false, message: 'Minimum withdrawal amount is ₹110' });
-    }
-
-    const newReq = {
-        id: 'W' + Date.now(),
-        phone: phone,
-        amount: parseFloat(amount),
-        type: type,
-        details: details,
-        status: 'Pending', // Default state until Admin approves
-        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    withdrawals.unshift(newReq);
-    console.log(`[Withdrawal Placed] User: ${phone} | Amount: ₹${amount} | Status: Pending`);
-    res.json({ success: true, request: newReq });
-});
-
-// User fetches their own withdrawal records
-app.get('/api/withdraw/user/:phone', (req, res) => {
-    const userReqs = withdrawals.filter(w => w.phone === req.params.phone);
-    res.json({ success: true, history: userReqs });
-});
-
-// Admin fetches all requests
-app.get('/api/admin/withdrawals', (req, res) => {
-    res.json({ success: true, withdrawals });
-});
-
-// Admin approves or rejects a request
-app.post('/api/admin/withdraw-action', (req, res) => {
-    const { id, action } = req.body; // action: 'Approve' or 'Reject'
-    const target = withdrawals.find(w => w.id === id);
-
-    if (!target) {
-        return res.status(404).json({ success: false, message: 'Request not found' });
-    }
-
-    if (action === 'Approve') {
-        target.status = 'Success';
-        console.log(`[Withdrawal Approved] ID: ${id} | User: ${target.phone} | Amount: ₹${target.amount}`);
-    } else if (action === 'Reject') {
-        target.status = 'Rejected';
-        console.log(`[Withdrawal Rejected] ID: ${id} | User: ${target.phone}`);
-    }
-
-    res.json({ success: true, message: `Withdrawal marked as ${target.status}` });
-});
-
-// ==========================================
-// 3. PAGE ROUTES
-// ==========================================
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-app.get('/withdraw', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'withdraw.html'));
-});
-
-app.get('/deposit', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'deposit.html'));
-});
-
-// Catch-all route to Lobby
-app.get('*', (req, res, next) => {
-    if (req.url.includes('.')) return next();
+// Root route Render health check ke liye
+app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ==========================================
-// 4. AVIATOR ENGINE (Real-time Flight & Crash)
-// ==========================================
-let aviatorMult = 1.00;
-let aviatorFlying = false;
+// Render ping route
+app.get('/healthz', (req, res) => {
+    res.status(200).send('OK');
+});
+
+// ---------------- GLOBAL STATE ----------------
+let adminConfig = {
+    upiId: 'merchant@upi',
+    qrCodeBase64: ''
+};
+let pendingDeposits = [];
+
+// ---------------- 1. AVIATOR ENGINE ----------------
+let aviatorMultiplier = 1.00;
+let aviatorState = 'WAITING';
 let aviatorCrashPoint = 2.00;
-let aviatorTimer = null;
+let aviatorBets = [];
 
-function startAviatorRound() {
-    aviatorMult = 1.00;
-    aviatorFlying = true;
-
-    // Check if Admin has overridden next round
-    if (manualAviatorCrash !== null) {
-        aviatorCrashPoint = manualAviatorCrash;
-        manualAviatorCrash = null; // Reset back to auto after applying
-        console.log(`[Aviator Engine] Target overridden to: ${aviatorCrashPoint}x`);
-    } else {
-        const rand = Math.random();
-        if (rand < 0.12) {
-            aviatorCrashPoint = 1.05;
-        } else if (rand < 0.75) {
-            aviatorCrashPoint = parseFloat((1.10 + Math.random() * 2.2).toFixed(2));
-        } else {
-            aviatorCrashPoint = parseFloat((3.2 + Math.random() * 12.0).toFixed(2));
-        }
-    }
-
-    aviatorTimer = setInterval(() => {
-        if (aviatorMult >= aviatorCrashPoint) {
-            clearInterval(aviatorTimer);
-            aviatorFlying = false;
-            io.emit('aviator_crash', aviatorCrashPoint);
-
-            // Wait 4 seconds before starting next round
-            setTimeout(() => {
-                startAviatorRound();
-            }, 4000);
-        } else {
-            aviatorMult = parseFloat((aviatorMult + 0.02 * Math.pow(aviatorMult, 0.45)).toFixed(2));
-            io.emit('aviator_tick', aviatorMult);
-        }
-    }, 100);
+function generateCrashPoint() {
+    const rand = Math.random();
+    if (rand < 0.05) return 1.00;
+    return parseFloat((0.99 / (1 - rand)).toFixed(2));
 }
 
-startAviatorRound();
+function startAviatorLoop() {
+    aviatorState = 'WAITING';
+    aviatorMultiplier = 1.00;
+    aviatorCrashPoint = generateCrashPoint();
+    aviatorBets = [];
+    io.emit('aviator_state', { state: 'WAITING', multiplier: 1.00 });
 
-// ==========================================
-// 5. WINGO 1MIN ENGINE (Lottery Countdown)
-// ==========================================
+    setTimeout(() => {
+        aviatorState = 'FLYING';
+        let startTime = Date.now();
+
+        const interval = setInterval(() => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            aviatorMultiplier = parseFloat((1.00 * Math.pow(1.06, elapsed * 5)).toFixed(2));
+
+            if (aviatorMultiplier >= aviatorCrashPoint) {
+                clearInterval(interval);
+                aviatorState = 'CRASHED';
+                io.emit('aviator_state', { state: 'CRASHED', multiplier: aviatorMultiplier });
+                setTimeout(startAviatorLoop, 4000);
+            } else {
+                io.emit('aviator_state', { state: 'FLYING', multiplier: aviatorMultiplier });
+            }
+        }, 100);
+    }, 5000);
+}
+startAviatorLoop();
+
+// ---------------- 2. COLOR PREDICTION (WINGO 60s) ENGINE ----------------
 let wingoTimer = 60;
-let periodNumber = 202609001;
+let wingoPeriod = Date.now().toString().slice(-10);
+let wingoBets = [];
 let wingoHistory = [
-    { period: "202609000", number: 7, color: "green", bigSmall: "big" }
+    { period: '20260901', number: 7, color: ['green'], bigSmall: 'big' },
+    { period: '20260902', number: 2, color: ['red'], bigSmall: 'small' },
+    { period: '20260903', number: 0, color: ['red', 'violet'], bigSmall: 'small' },
+    { period: '20260904', number: 5, color: ['green', 'violet'], bigSmall: 'big' }
 ];
 
+function calculateColorResult(number) {
+    let colors = [];
+    if (number === 0) colors = ['red', 'violet'];
+    else if (number === 5) colors = ['green', 'violet'];
+    else if ([1, 3, 7, 9].includes(number)) colors = ['green'];
+    else colors = ['red'];
+
+    let bigSmall = number >= 5 ? 'big' : 'small';
+    return { number, colors, bigSmall };
+}
+
+function resolveWingoRound() {
+    const winningNumber = Math.floor(Math.random() * 10);
+    const { colors, bigSmall } = calculateColorResult(winningNumber);
+
+    const roundResult = {
+        period: wingoPeriod,
+        number: winningNumber,
+        color: colors,
+        bigSmall: bigSmall
+    };
+
+    wingoHistory.unshift(roundResult);
+    if (wingoHistory.length > 20) wingoHistory.pop();
+
+    wingoBets.forEach(bet => {
+        let winMultiplier = 0;
+
+        if (bet.selectType === 'number' && parseInt(bet.selection) === winningNumber) {
+            winMultiplier = 9;
+        } else if (bet.selectType === 'bigSmall' && bet.selection === bigSmall) {
+            winMultiplier = 2;
+        } else if (bet.selectType === 'color') {
+            if (bet.selection === 'violet' && colors.includes('violet')) {
+                winMultiplier = 4.5;
+            } else if (bet.selection === 'green' && colors.includes('green')) {
+                winMultiplier = winningNumber === 5 ? 1.5 : 2;
+            } else if (bet.selection === 'red' && colors.includes('red')) {
+                winMultiplier = winningNumber === 0 ? 1.5 : 2;
+            }
+        }
+
+        const winAmount = bet.amount * winMultiplier;
+        io.to(bet.socketId).emit('wingo_payout', {
+            period: wingoPeriod,
+            win: winAmount > 0,
+            amount: winAmount,
+            winningNumber: winningNumber,
+            color: colors
+        });
+    });
+
+    io.emit('wingo_round_result', roundResult);
+
+    wingoPeriod = (parseInt(wingoPeriod) + 1).toString();
+    wingoBets = [];
+    wingoTimer = 60;
+}
+
+// 60-second timer
 setInterval(() => {
     wingoTimer--;
 
-    if (wingoTimer <= 0) {
-        let winningNumber;
-
-        // Check if Admin has overridden the number
-        if (manualWingoNumber !== null) {
-            winningNumber = manualWingoNumber;
-            manualWingoNumber = null; // Reset back to auto
-            console.log(`[Win Go Engine] Target overridden to: ${winningNumber}`);
-        } else {
-            winningNumber = Math.floor(Math.random() * 10);
-        }
-
-        const color = winningNumber === 0 
-            ? "red-violet" 
-            : winningNumber === 5 
-                ? "green-violet" 
-                : winningNumber % 2 === 0 
-                    ? "red" 
-                    : "green";
-        const bigSmall = winningNumber >= 5 ? "big" : "small";
-
-        const roundResult = {
-            period: periodNumber.toString(),
-            number: winningNumber,
-            color: color,
-            bigSmall: bigSmall
-        };
-
-        wingoHistory.unshift(roundResult);
-        if (wingoHistory.length > 15) wingoHistory.pop();
-
-        io.emit('wingo_round_result', roundResult);
-
-        periodNumber++;
-        wingoTimer = 60;
-    }
-
     io.emit('wingo_tick', {
         timer: wingoTimer,
-        period: periodNumber.toString(),
+        period: wingoPeriod,
         isLocked: wingoTimer <= 10
     });
+
+    if (wingoTimer <= 0) {
+        resolveWingoRound();
+    }
 }, 1000);
 
-// ==========================================
-// 6. SOCKET.IO CONNECTION
-// ==========================================
+// ---------------- SOCKET COMMUNICATION ----------------
 io.on('connection', (socket) => {
-    // Send initial states upon connect
     socket.emit('wingo_init', {
         timer: wingoTimer,
-        period: periodNumber.toString(),
-        history: wingoHistory
+        period: wingoPeriod,
+        history: wingoHistory,
+        isLocked: wingoTimer <= 10
     });
 
-    if (aviatorFlying) {
-        socket.emit('aviator_tick', aviatorMult);
-    }
+    socket.on('wingo_place_bet', (data) => {
+        if (wingoTimer <= 10) {
+            return socket.emit('wingo_bet_error', { message: 'Betting is locked for this round!' });
+        }
+        wingoBets.push({ socketId: socket.id, ...data });
+        socket.emit('wingo_bet_success', { message: 'Bet placed successfully!', bet: data });
+    });
+
+    socket.on('get_admin_config', () => socket.emit('admin_config', adminConfig));
+    socket.on('update_admin_config', (cfg) => {
+        adminConfig = { ...adminConfig, ...cfg };
+        io.emit('admin_config', adminConfig);
+    });
+
+    socket.on('submit_deposit', (dep) => {
+        pendingDeposits.push({ id: Date.now(), ...dep, status: 'PENDING' });
+        io.emit('pending_deposits', pendingDeposits);
+    });
+
+    socket.on('verify_deposit', ({ id, action }) => {
+        pendingDeposits = pendingDeposits.map(d => d.id === id ? { ...d, status: action } : d);
+        io.emit('pending_deposits', pendingDeposits);
+    });
 });
 
-server.listen(PORT, () => {
-    console.log(`Server running smoothly on port ${PORT}`);
+// Port and Host binding for Render
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on port ${PORT}`);
 });
